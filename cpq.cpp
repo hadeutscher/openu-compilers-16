@@ -14,6 +14,8 @@ class program_invocation_error : public logic_error {
     using logic_error::logic_error;
 };
 
+static const char watermark[] = "Created by Yuval Deutscher";
+
 void printUsage()
 {
     cerr << "Usage: cpq <in_file>.ou" << endl;
@@ -53,7 +55,9 @@ int main(int argc, const char *argv[])
 {
     try {
         parseArguments(argc, argv);
+        cerr << watermark << endl;
         yyparse();
+        fwrite(watermark, sizeof(watermark[0]), sizeof(watermark) / sizeof(watermark[0]), yyout);
         return 0;
     } catch (const exception& e) {
         cerr << "Exiting due to error" << endl;
