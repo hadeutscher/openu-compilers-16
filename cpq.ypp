@@ -1,6 +1,5 @@
 %{
 #include <iostream>
-#include <algorithm>
 
 using namespace std;
 
@@ -10,35 +9,109 @@ int yyerror(const char *p) { cerr << "Error: " << p << endl; }
 
 %union {
     struct {
-        int val;
-        int height;
-    } tree;
+        int number;
+    } num_int;
 
     struct {
-        int sum;
-        int height;
-    } treelist;
+        float number;
+    } num_float;
 
     struct {
-        int val;
-    } number;
+        const char *name;
+    } id;
 }
 
-%token <number> NUMBER
-%token SUM ZERO HEIGHT DOUBLE LPAREN RPAREN
+%token BREAK CASE DEFAULT ELSE FLOAT IF INPUT INT OUTPUT STATIC_CAST SWITCH WHILE
+%token LPAREN RPAREN LCURL RCURL COMMA COLON SEMICOLON ASSIGN
+%token OP_EQ OP_NE OP_LT OP_GT OP_GEQ OP_LEQ OP_ADD OP_SUB OP_MUL OP_DIV OP_OR OP_AND OP_NOT
 
-%type <tree> tree;
-%type <treelist> treelist;
+%token <num_int> NUM_INT
+%token <num_float> NUM_FLOAT
+%token <id> ID
 
 %%
+program : declarations stmt_block ;
 
-S: tree                             { printf("%d\n", $1.val); }
-tree: LPAREN SUM treelist RPAREN    { $$.val = $3.sum; $$.height = $3.height + 1; }
-tree: LPAREN ZERO treelist RPAREN   { $$.val = 0; $$.height = $3.height + 1; }
-tree: LPAREN HEIGHT treelist RPAREN { $$.val = $$.height = $3.height + 1; }
-tree: LPAREN DOUBLE tree RPAREN     { $$.val = $3.val * 2; $$.height = $3.height + 1; }
-tree: NUMBER                        { $$.val = $1.val; $$.height = 0; }
-treelist: treelist tree             { $$.sum = $1.sum + $2.val; $$.height = max($1.height, $2.height); }
-treelist: tree                      { $$.sum = $1.val; $$.height = $1.height; }
+declarations : declarations declaration
+             | %empty;
 
+declaration : idlist COLON type SEMICOLON ;
+
+type : INT
+     | FLOAT
+	 ;
+
+idlist : idlist COMMA ID
+       | ID
+	   ;
+
+stmt : assignment_stmt
+      | input_stmt
+      | output_stmt
+      | cast_stmt
+      | if_stmt
+      | while_stmt
+      | switch_stmt
+      | break_stmt
+      | stmt_block
+	  ;
+
+assignment_stmt : ID ASSIGN expression SEMICOLON ;
+
+input_stmt : INPUT LPAREN ID RPAREN SEMICOLON ;
+output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON ;
+
+cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON ;
+
+if_stmt : IF LPAREN boolexpr RPAREN stmt ELSE stmt ;
+
+while_stmt : WHILE LPAREN boolexpr RPAREN stmt ;
+
+switch_stmt : SWITCH LPAREN expression RPAREN LCURL caselist
+                           DEFAULT COLON stmtlist RCURL ;
+caselist : caselist CASE num COLON stmtlist
+         | %empty;
+
+break_stmt : BREAK SEMICOLON ;
+
+stmt_block : LCURL stmtlist RCURL ;
+
+stmtlist  : stmtlist stmt
+          | %empty;
+
+boolexpr : boolexpr OP_OR boolterm
+         | boolterm
+		 ;
+
+boolterm : boolterm OP_AND boolfactor
+         | boolfactor
+		 ;
+
+boolfactor : OP_NOT LPAREN boolexpr RPAREN
+           | expression  OP_EQ  expression
+           | expression  OP_NE  expression
+           | expression  OP_LT  expression
+           | expression  OP_GT  expression
+           | expression  OP_LEQ  expression
+           | expression  OP_GEQ  expression
+		   ;
+
+expression : expression OP_ADD term
+		   | expression OP_SUB term
+           | term
+		   ;
+
+term : term OP_MUL factor
+	 | term OP_DIV factor
+     | factor
+	 ;
+
+factor : LPAREN expression RPAREN
+       | ID
+       | num
+	   ;
+
+num : NUM_FLOAT
+    | NUM_INT
+    ;
 %%
