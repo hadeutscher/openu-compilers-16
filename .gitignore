@@ -118,3 +118,5 @@ CTestTestfile.cmake
 _deps
 
 cpq
+*.tab.*
+*.yy.*

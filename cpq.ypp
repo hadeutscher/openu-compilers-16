@@ -1,0 +1,44 @@
+%{
+#include <iostream>
+#include <algorithm>
+
+using namespace std;
+
+int yylex();
+int yyerror(const char *p) { cerr << "Error: " << p << endl; }
+%}
+
+%union {
+    struct {
+        int val;
+        int height;
+    } tree;
+
+    struct {
+        int sum;
+        int height;
+    } treelist;
+
+    struct {
+        int val;
+    } number;
+}
+
+%token <number> NUMBER
+%token SUM ZERO HEIGHT DOUBLE LPAREN RPAREN
+
+%type <tree> tree;
+%type <treelist> treelist;
+
+%%
+
+S: tree                             { printf("%d\n", $1.val); }
+tree: LPAREN SUM treelist RPAREN    { $$.val = $3.sum; $$.height = $3.height + 1; }
+tree: LPAREN ZERO treelist RPAREN   { $$.val = 0; $$.height = $3.height + 1; }
+tree: LPAREN HEIGHT treelist RPAREN { $$.val = $$.height = $3.height + 1; }
+tree: LPAREN DOUBLE tree RPAREN     { $$.val = $3.val * 2; $$.height = $3.height + 1; }
+tree: NUMBER                        { $$.val = $1.val; $$.height = 0; }
+treelist: treelist tree             { $$.sum = $1.sum + $2.val; $$.height = max($1.height, $2.height); }
+treelist: tree                      { $$.sum = $1.val; $$.height = $1.height; }
+
+%%
