@@ -12,4 +12,5 @@ ADD_FLEX_BISON_DEPENDENCY(CPQLexer CPQParser)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_executable(cpq main.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
+add_executable(cpq cpq.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
+target_link_libraries(cpq stdc++fs)
