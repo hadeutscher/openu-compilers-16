@@ -3,10 +3,8 @@
 
 #include "cpq_sdd.h"
 
-using namespace std;
-
 int yylex();
-int yyerror(const char *p) { cerr << "Error: " << p << endl; }
+int yyerror(const char *p) { std::cerr << "Error: " << p << std::endl; }
 %}
 
 %union {

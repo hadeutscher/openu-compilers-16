@@ -5,6 +5,20 @@
         "string": "cpp",
         "unordered_map": "cpp",
         "vector": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "filesystem": "cpp",
+        "system_error": "cpp",
+        "random": "cpp",
+        "fstream": "cpp",
+        "iostream": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "new": "cpp",
+        "ratio": "cpp",
+        "stdexcept": "cpp",
+        "streambuf": "cpp",
+        "functional": "cpp",
+        "iosfwd": "cpp",
+        "iomanip": "cpp"
     }
 }

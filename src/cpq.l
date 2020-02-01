@@ -3,7 +3,6 @@
 #include <cmath>
 #include "cpq.tab.hpp"
 
-using namespace std;
 %}
 %option noyywrap
 %x COMMENT
@@ -45,7 +44,7 @@ while { return WHILE; }
 [[:digit:]]+.[[:digit:]]* { yylval.num_float.number = atof(yytext); return NUM_FLOAT; }
 [[:alpha:]][[:alnum:]]* {
     if (strlen(yytext) > 9) {
-        cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << endl;
+        std::cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << std::endl;
         yylval.id.name = "";
         return ID;
     } else {
@@ -58,5 +57,5 @@ while { return WHILE; }
 <COMMENT>\n
 <COMMENT>.
 [ \t\n]*
-. { cerr << "Error in line " << yylineno << ": unrecognized token " <<  yytext << endl; }
+. { std::cerr << "Error in line " << yylineno << ": unrecognized token " <<  yytext << std::endl; }
 %%

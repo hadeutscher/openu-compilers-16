@@ -1,27 +1,78 @@
 #include <iostream>
 #include <experimental/filesystem>
-#include <exception>
-#include <stdexcept>
-#include "cpq.tab.hpp"
+#include <cassert>
+#include <sstream>
+#include <iomanip>
 
-using namespace std;
-namespace fs = experimental::filesystem;
+#include "cpq.tab.hpp"
+#include "cpq.h"
+
+namespace fs = std::experimental::filesystem;
 
 extern FILE *yyin;
 extern FILE *yyout;
 
-class program_invocation_error : public logic_error {
-    using logic_error::logic_error;
-};
 
-static const char watermark[] = "Created by Yuval Deutscher";
-
-void printUsage()
+namespace cpq
 {
-    cerr << "Usage: cpq <in_file>.ou" << endl;
+    void write_str(std::string s)
+    {
+        if (fwrite(s.c_str(), sizeof(*s.c_str()), s.length(), yyout) != s.length()) {
+            perror("fwrite");
+            throw std::runtime_error("I/O error");
+        }
+    }
+
+    void CodeGenerator::write_arg(std::string arg)
+    {
+        write_str(move(arg));
+    }
+
+    void CodeGenerator::write_arg(Label arg)
+    {
+        BackpatchHandle h = ftell(yyout);
+        write_str("XXXX"); // Backpatching with non-binary data is fun
+        _backpatches.insert({std::move(arg), std::move(h)});
+    }
+
+    void CodeGenerator::gen_label(Label l)
+    {
+        // Convert the current instruction number to 4 character string to save as the label name
+        std::ostringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(4) << _curr_address;
+        auto str_label = ss.str();
+        assert(str_label.length() == 4);
+        _labels.insert({std::move(l), std::move(str_label)});
+    }
+
+    static void seek_output(long int off)
+    {
+        if (fseek(yyout, off, SEEK_SET)) {
+            perror("fseek");
+            throw std::runtime_error("I/O error");
+        }
+    }
+
+    void CodeGenerator::backpatch()
+    {
+        for (const auto &[label, bp_handle] : _backpatches) {
+            auto ser_label = _labels.at(label);
+            auto pos = ftell(yyout);
+            seek_output(bp_handle);
+            write_str(ser_label);
+            seek_output(pos);
+        }
+    }
+} // namespace cpq
+
+static constexpr char watermark[] = "Created by Yuval Deutscher";
+
+static void printUsage()
+{
+    std::cerr << "Usage: cpq <in_file>.ou" << std::endl;
 }
 
-string createOutputFilename(string input_filename)
+static std::string createOutputFilename(std::string input_filename)
 {
     fs::path path(input_filename);
     if (path.extension() != ".ou") {
@@ -31,36 +82,45 @@ string createOutputFilename(string input_filename)
     return path.replace_extension(".qud");
 }
 
-void parseArguments(int argc, const char *argv[])
+static auto parseArguments(int argc, const char *argv[])
 {
     if (argc < 2) {
         printUsage();
         throw program_invocation_error("not enough args");
     }
-    string in_file_name(argv[1]);
+    std::string in_file_name(argv[1]);
     yyin = fopen(in_file_name.c_str(), "r");
     if (!yyin) {
         perror("fopen");
-        throw runtime_error("unable to open input");
+        throw std::runtime_error("unable to open input");
     }
-    string out_file_name(createOutputFilename(in_file_name));
+    std::string out_file_name(createOutputFilename(in_file_name));
     yyout = fopen(out_file_name.c_str(), "w");
     if (!yyout) {
         perror("fopen");
-        throw runtime_error("unable to open output");
+        throw std::runtime_error("unable to open output");
     }
+    return std::make_tuple(in_file_name, out_file_name);
 }
 
 int main(int argc, const char *argv[])
 {
+    std::string in_file_name{}, out_file_name{};
     try {
-        parseArguments(argc, argv);
-        cerr << watermark << endl;
+        std::tie(in_file_name, out_file_name) = parseArguments(argc, argv);
+        std::cerr << watermark << std::endl;
         yyparse();
-        fwrite(watermark, sizeof(watermark[0]), sizeof(watermark) / sizeof(watermark[0]), yyout);
-        fwrite("\n", 1, 1, yyout);
+        cpq::write_str(watermark);
+        cpq::write_str("\n");
         return 0;
-    } catch (const exception& e) {
-        cerr << "Exiting due to error" << endl;
+    } catch (const std::exception& e) {
+        cpq::CPQ.on_error();
+        std::cerr << "Stopping due to error: " << e.what() << std::endl;
+    }
+    fclose(yyin);
+    fclose(yyout);
+    if (!cpq::CPQ.success()) {
+        remove(out_file_name.c_str());
+        std::cerr << "Exited with no ouput due to error." << std::endl;
     }
 }
