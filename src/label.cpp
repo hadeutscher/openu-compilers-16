@@ -1,3 +1,3 @@
 #include "label.h"
 
-int Label::counter = 0;
+int cpq::Label::counter = 0;

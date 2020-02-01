@@ -1,7 +1,8 @@
 %{
 #include <iostream>
 
-#include "cpq_sdd.h"
+#include "cpq.h"
+#include "environment.h"
 
 int yylex();
 int yyerror(const char *p) { std::cerr << "Error: " << p << std::endl; }
