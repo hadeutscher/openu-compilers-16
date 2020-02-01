@@ -1,0 +1,11 @@
+Environment setup:
+apt install build-essential cmake bison flex
+
+Building:
+mkdir build
+cd build
+cmake ..
+make
+
+Running:
+src/cpq ../src/test.ou

@@ -58,6 +58,7 @@ int main(int argc, const char *argv[])
         cerr << watermark << endl;
         yyparse();
         fwrite(watermark, sizeof(watermark[0]), sizeof(watermark) / sizeof(watermark[0]), yyout);
+        fwrite("\n", 1, 1, yyout);
         return 0;
     } catch (const exception& e) {
         cerr << "Exiting due to error" << endl;
