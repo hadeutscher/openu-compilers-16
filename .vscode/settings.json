@@ -19,6 +19,8 @@
         "streambuf": "cpp",
         "functional": "cpp",
         "iosfwd": "cpp",
-        "iomanip": "cpp"
+        "iomanip": "cpp",
+        "*.ypp": "cpp",
+        "*.l": "cpp"
     }
 }

@@ -110,6 +110,7 @@ int main(int argc, const char *argv[])
         std::tie(in_file_name, out_file_name) = parseArguments(argc, argv);
         std::cerr << watermark << std::endl;
         yyparse();
+        cpq::CPQ.backpatch();
         cpq::write_str(watermark);
         cpq::write_str("\n");
         return 0;
