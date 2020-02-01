@@ -22,4 +22,23 @@ namespace cpq
         return result.second;
     }
 
+    int Label::counter = 0;
+
+    void CodeGenerator::write_arg(string arg)
+    {
+        write_str(move(arg));
+    }
+
+    void CodeGenerator::write_arg(Label arg)
+    {
+        BackpatchHandle h = ftell(yyout);
+        write_str("XXXX"); // Backpatching non-binary data is fun
+    }
+
+    void CodeGenerator::write_str(string s)
+    {
+        if (fwrite(s.c_str(), sizeof(*s.c_str()), s.length(), yyout) != s.length()) {
+            throw runtime_error("I/O error");
+        }
+    }
 }

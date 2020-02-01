@@ -7,6 +7,30 @@
 
 using namespace std;
 
+extern FILE *yyout;
+
+namespace cpq
+{
+    class Label {
+    public:
+        Label() : value(counter++) {}
+        bool operator==(const Label &other) const { return value == other.value; }
+
+        int value;
+    private:
+        static int counter;
+    };
+}
+
+namespace std
+{
+    template<>
+    struct hash<cpq::Label>
+    {
+        std::size_t operator()(const cpq::Label& l) const { return hash<int>()(l.value); }
+    };
+}
+
 namespace cpq
 {
     enum class Type {
@@ -29,17 +53,28 @@ namespace cpq
 
     using BackpatchHandle = int;
 
-    struct Operand {
-        optional<BackpatchHandle> operator() { return auto(); }
-    };
+    using SerializedLabel = int;
 
     class CodeGenerator {
     public:
+        template <typename... Args>
+        void gen(string op, Args... args)
+        {
+            write_str(move(op));
+            auto foo = { write_arg(move(args))... };
+        }
+
+        void write_arg(string arg);
+        void write_arg(Label arg);
+        void write_str(string s);
+        void gen_label(Label l);
 
     private:
-        list<
+        unordered_multimap<string, BackpatchHandle> backpatches;
+        unordered_map<Label, SerializedLabel> labels;
     };
 
     static CodeGenerator CPQ;
 }
+
 #endif //CPQ_CPQ_SDD_H
