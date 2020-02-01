@@ -20,6 +20,10 @@ int yyerror(const char *p) { std::cerr << "Error: " << p << std::endl; }
     struct {
         const char *name;
     } id;
+
+    struct {
+        cpq::Type type;
+    } expression;
 }
 
 %token BREAK CASE DEFAULT ELSE FLOAT IF INPUT INT OUTPUT STATIC_CAST SWITCH WHILE
