@@ -1,6 +1,8 @@
 %{
 #include <iostream>
 
+#include "cpq_sdd.h"
+
 using namespace std;
 
 int yylex();
