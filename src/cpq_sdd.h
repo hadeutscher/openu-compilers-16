@@ -26,5 +26,20 @@ namespace cpq
     };
 
     static stack<Environment> Environments;
+
+    using BackpatchHandle = int;
+
+    struct Operand {
+        optional<BackpatchHandle> operator() { return auto(); }
+    };
+
+    class CodeGenerator {
+    public:
+
+    private:
+        list<
+    };
+
+    static CodeGenerator CPQ;
 }
 #endif //CPQ_CPQ_SDD_H

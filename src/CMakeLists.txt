@@ -1,9 +1,11 @@
-find_package(BISON)
-find_package(FLEX)
+if(NOT "$ENV{OS}" STREQUAL "Windows_NT")
+    find_package(BISON)
+    find_package(FLEX)
 
-BISON_TARGET(CPQParser cpq.ypp ${CMAKE_CURRENT_BINARY_DIR}/cpq.tab.cpp)
-FLEX_TARGET(CPQLexer cpq.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
-ADD_FLEX_BISON_DEPENDENCY(CPQLexer CPQParser)
+    BISON_TARGET(CPQParser cpq.ypp ${CMAKE_CURRENT_BINARY_DIR}/cpq.tab.cpp)
+    FLEX_TARGET(CPQLexer cpq.l ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.cpp)
+    ADD_FLEX_BISON_DEPENDENCY(CPQLexer CPQParser)
+endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
