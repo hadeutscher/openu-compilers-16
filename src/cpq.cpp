@@ -1,26 +1,23 @@
 #include <iostream>
+#include <fstream>
 #include <experimental/filesystem>
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-
+#include <FlexLexer.h>
 #include "cpq.tab.hpp"
 #include "cpq.h"
 
 namespace fs = std::experimental::filesystem;
 
-extern FILE *yyin;
-extern FILE *yyout;
-
+std::ifstream yyin{};
+std::ofstream yyout{};
 
 namespace cpq
 {
     void write_str(std::string s)
     {
-        if (fwrite(s.c_str(), sizeof(*s.c_str()), s.length(), yyout) != s.length()) {
-            perror("fwrite");
-            throw std::runtime_error("I/O error");
-        }
+        // TODO
     }
 
     void CodeGenerator::write_arg(std::string arg)
@@ -30,7 +27,7 @@ namespace cpq
 
     void CodeGenerator::write_arg(Label arg)
     {
-        BackpatchHandle h = ftell(yyout);
+        BackpatchHandle h = 0; // TODO
         write_str("XXXX"); // Backpatching with non-binary data is fun
         _backpatches.insert({std::move(arg), std::move(h)});
     }
@@ -47,17 +44,14 @@ namespace cpq
 
     static void seek_output(long int off)
     {
-        if (fseek(yyout, off, SEEK_SET)) {
-            perror("fseek");
-            throw std::runtime_error("I/O error");
-        }
+        // TODO
     }
 
     void CodeGenerator::backpatch()
     {
         for (const auto &[label, bp_handle] : _backpatches) {
             auto ser_label = _labels.at(label);
-            auto pos = ftell(yyout);
+            auto pos = 0; // TODO
             seek_output(bp_handle);
             write_str(ser_label);
             seek_output(pos);
@@ -89,37 +83,32 @@ static auto parseArguments(int argc, const char *argv[])
         throw program_invocation_error("not enough args");
     }
     std::string in_file_name(argv[1]);
-    yyin = fopen(in_file_name.c_str(), "r");
-    if (!yyin) {
-        perror("fopen");
-        throw std::runtime_error("unable to open input");
-    }
+    yyin.open(in_file_name);
     std::string out_file_name(createOutputFilename(in_file_name));
-    yyout = fopen(out_file_name.c_str(), "w");
-    if (!yyout) {
-        perror("fopen");
-        throw std::runtime_error("unable to open output");
-    }
-    return std::make_tuple(in_file_name, out_file_name);
+    yyout.open(out_file_name); 
 }
 
 int main(int argc, const char *argv[])
 {
     std::string in_file_name{}, out_file_name{};
     try {
-        std::tie(in_file_name, out_file_name) = parseArguments(argc, argv);
+        //std::tie(in_file_name, yyin, out_file_name, yyout) = parseArguments(argc, argv);
+        parseArguments(argc, argv);
         std::cerr << watermark << std::endl;
-        yyparse();
+        yyFlexLexer lexer(yyin, yyout);
+        yy::parser parse(lexer);
+        if (parse.parse()) {
+            cpq::CPQ.on_error();
+        }
         cpq::CPQ.backpatch();
         cpq::write_str(watermark);
         cpq::write_str("\n");
-        return 0;
     } catch (const std::exception& e) {
         cpq::CPQ.on_error();
         std::cerr << "Stopping due to error: " << e.what() << std::endl;
     }
-    fclose(yyin);
-    fclose(yyout);
+    //yyin.close();
+    //yyout.close();
     if (!cpq::CPQ.success()) {
         remove(out_file_name.c_str());
         std::cerr << "Exited with no ouput due to error." << std::endl;

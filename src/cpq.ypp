@@ -1,40 +1,36 @@
 %{
 #include <iostream>
 
+#include <FlexLexer.h>
 #include "cpq.h"
 #include "environment.h"
 
-int yylex();
-int yyerror(const char *p) { std::cerr << "Error: " << p << std::endl; }
 %}
+%language "c++"
+%define api.token.constructor
+%define api.value.type variant
+%define parse.assert
+%define parse.trace
+%define parse.error verbose
+%locations
 
-%union {
-    struct {
-        int number;
-    } num_int;
 
-    struct {
-        float number;
-    } num_float;
+%parse-param { yyFlexLexer& lexer }
 
-    struct {
-        const char *name;
-    } id;
-
-    struct {
-        cpq::Type type;
-    } expression;
+%code {
+    #define yylex lexer.yylex
 }
 
 %token BREAK CASE DEFAULT ELSE FLOAT IF INPUT INT OUTPUT STATIC_CAST SWITCH WHILE
 %token LPAREN RPAREN LCURL RCURL COMMA COLON SEMICOLON ASSIGN
 %token OP_EQ OP_NE OP_LT OP_GT OP_GEQ OP_LEQ OP_ADD OP_SUB OP_MUL OP_DIV OP_OR OP_AND OP_NOT
 
-%token <num_int> NUM_INT
-%token <num_float> NUM_FLOAT
-%token <id> ID
+%token <int> NUM_INT
+%token <float> NUM_FLOAT
+%token <std::string> ID
 
 %%
+%start program;
 program : declarations stmt_block ;
 
 declarations : declarations declaration
@@ -120,3 +116,7 @@ num : NUM_FLOAT
     | NUM_INT
     ;
 %%
+void yy::parser::error (const location_type& l, const std::string& m)
+{
+  std::cerr << l << ": " << m << std::endl;
+}
