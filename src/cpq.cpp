@@ -1,24 +1,22 @@
 #include "cpq.h"
 
-#include <iostream>
-#include <fstream>
 #include <experimental/filesystem>
+#include <fstream>
+#include <iostream>
 
 #include "cpq.tab.hpp"
-#include "lexer.h"
 #include "driver.h"
+#include "lexer.h"
 
 namespace fs = std::experimental::filesystem;
 
 static constexpr char watermark[] = "Created by Yuval Deutscher";
 
-static void printUsage()
-{
+static void printUsage() {
     std::cerr << "Usage: cpq <in_file>.ou" << std::endl;
 }
 
-static std::string createOutputFilename(std::string input_filename)
-{
+static std::string createOutputFilename(std::string input_filename) {
     fs::path path(input_filename);
     if (path.extension() != ".ou") {
         printUsage();
@@ -27,8 +25,7 @@ static std::string createOutputFilename(std::string input_filename)
     return path.replace_extension(".qud");
 }
 
-static auto parseArguments(cpq::Driver& driver, int argc, const char *argv[])
-{
+static auto parseArguments(cpq::Driver &driver, int argc, const char *argv[]) {
     if (argc < 2) {
         printUsage();
         throw program_invocation_error("not enough args");
@@ -40,13 +37,13 @@ static auto parseArguments(cpq::Driver& driver, int argc, const char *argv[])
     return std::make_tuple(in_file_name, out_file_name);
 }
 
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
     std::string in_file_name{}, out_file_name{};
     bool success;
     try {
         cpq::Driver driver;
-        std::tie(in_file_name, out_file_name) = parseArguments(driver, argc, argv);
+        std::tie(in_file_name, out_file_name) =
+            parseArguments(driver, argc, argv);
         std::cerr << watermark << std::endl;
         cpq::Lexer lexer(driver.in);
         cpq::Parser parse(lexer, driver);
@@ -56,7 +53,7 @@ int main(int argc, const char *argv[])
         driver.backpatch();
         driver.out << watermark << std::endl;
         success = driver.success();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         std::cerr << "Stopping due to error: " << e.what() << std::endl;
         success = false;
     }
