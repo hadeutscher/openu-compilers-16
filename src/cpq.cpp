@@ -1,63 +1,14 @@
+#include "cpq.h"
+
 #include <iostream>
 #include <fstream>
 #include <experimental/filesystem>
-#include <cassert>
-#include <sstream>
-#include <iomanip>
+
 #include "cpq.tab.hpp"
 #include "lexer.h"
-#include "cpq.h"
+#include "driver.h"
 
 namespace fs = std::experimental::filesystem;
-
-std::ifstream yyin{};
-std::ofstream yyout{};
-
-namespace cpq
-{
-    void write_str(std::string s)
-    {
-        // TODO
-    }
-
-    void CodeGenerator::write_arg(std::string arg)
-    {
-        write_str(move(arg));
-    }
-
-    void CodeGenerator::write_arg(Label arg)
-    {
-        BackpatchHandle h = 0; // TODO
-        write_str("XXXX"); // Backpatching with non-binary data is fun
-        _backpatches.insert({std::move(arg), std::move(h)});
-    }
-
-    void CodeGenerator::gen_label(Label l)
-    {
-        // Convert the current instruction number to 4 character string to save as the label name
-        std::ostringstream ss;
-        ss << std::hex << std::setfill('0') << std::setw(4) << _curr_address;
-        auto str_label = ss.str();
-        assert(str_label.length() == 4);
-        _labels.insert({std::move(l), std::move(str_label)});
-    }
-
-    static void seek_output(long int off)
-    {
-        // TODO
-    }
-
-    void CodeGenerator::backpatch()
-    {
-        for (const auto &[label, bp_handle] : _backpatches) {
-            auto ser_label = _labels.at(label);
-            auto pos = 0; // TODO
-            seek_output(bp_handle);
-            write_str(ser_label);
-            seek_output(pos);
-        }
-    }
-} // namespace cpq
 
 static constexpr char watermark[] = "Created by Yuval Deutscher";
 
@@ -76,40 +27,40 @@ static std::string createOutputFilename(std::string input_filename)
     return path.replace_extension(".qud");
 }
 
-static auto parseArguments(int argc, const char *argv[])
+static auto parseArguments(cpq::Driver& driver, int argc, const char *argv[])
 {
     if (argc < 2) {
         printUsage();
         throw program_invocation_error("not enough args");
     }
     std::string in_file_name(argv[1]);
-    yyin.open(in_file_name);
+    driver.in.open(in_file_name);
     std::string out_file_name(createOutputFilename(in_file_name));
-    yyout.open(out_file_name); 
+    driver.out.open(out_file_name);
+    return std::make_tuple(in_file_name, out_file_name);
 }
 
 int main(int argc, const char *argv[])
 {
     std::string in_file_name{}, out_file_name{};
+    bool success;
     try {
-        //std::tie(in_file_name, yyin, out_file_name, yyout) = parseArguments(argc, argv);
-        parseArguments(argc, argv);
+        cpq::Driver driver;
+        std::tie(in_file_name, out_file_name) = parseArguments(driver, argc, argv);
         std::cerr << watermark << std::endl;
-        cpq::cpqFlexLexer lexer(yyin);
-        yy::parser parse(lexer);
+        cpq::Lexer lexer(driver.in);
+        cpq::Parser parse(lexer, driver);
         if (parse.parse()) {
-            cpq::CPQ.on_error();
+            driver.on_error();
         }
-        cpq::CPQ.backpatch();
-        cpq::write_str(watermark);
-        cpq::write_str("\n");
+        driver.backpatch();
+        driver.out << watermark << std::endl;
+        success = driver.success();
     } catch (const std::exception& e) {
-        cpq::CPQ.on_error();
         std::cerr << "Stopping due to error: " << e.what() << std::endl;
+        success = false;
     }
-    //yyin.close();
-    //yyout.close();
-    if (!cpq::CPQ.success()) {
+    if (!success) {
         remove(out_file_name.c_str());
         std::cerr << "Exited with no ouput due to error." << std::endl;
     }

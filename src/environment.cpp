@@ -1,12 +1,10 @@
-#include <cassert>
-
 #include "environment.h"
 
-extern FILE *yyout;
+#include <cassert>
 
 namespace cpq
 {
-    Type Environment::tryGet(std::string var_name)
+    Type Environment::try_get(std::string var_name)
     {
         auto it = sym_tab.find(var_name);
         if (it == sym_tab.end()) {
@@ -23,4 +21,4 @@ namespace cpq
         auto [iter, success] = sym_tab.insert({std::move(var_name), std::move(var_type)});
         return success;
     }
-}
+} // namespace cpq

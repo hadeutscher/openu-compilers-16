@@ -8,29 +8,19 @@
 #include "cpq.tab.hpp"
 #include "location.hh"
 
-namespace cpq {
-class cpqFlexLexer : public yyFlexLexer {
-public:
-   cpqFlexLexer(std::istream& in) : yyFlexLexer(&in)
-   {
-   };
-   virtual ~cpqFlexLexer() {
-   };
-
-   //get rid of override virtual function warning
-   //using FlexLexer::yylex;
-
-   virtual
-   yy::parser::symbol_type yylex2();
-   // YY_DECL defined in mc_lexer.l
-   // Method body created by flex in mc_lexer.yy.cc
-
-    yy::location loc;
-private:
-   /* yyval ptr */
-   yy::parser::semantic_type *yylval = nullptr;
-};
-
-} /* end namespace cpq */
+namespace cpq
+{
+    class Lexer : public yyFlexLexer {
+    public:
+        Lexer(std::istream& in) : yyFlexLexer(&in) {};
+        virtual ~Lexer() {};
+    
+        Parser::symbol_type next_token();
+        
+        cpq::location loc;
+    private:
+        Parser::semantic_type *yylval = nullptr;
+    };
+} // namespace cpq
 
 #endif /* CPQ_LEXER_H */
