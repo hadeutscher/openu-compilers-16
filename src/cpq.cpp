@@ -3,6 +3,7 @@
 #include <experimental/filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 
 #include "cpq.tab.hpp"
 #include "driver.h"
@@ -13,7 +14,7 @@ namespace fs = std::experimental::filesystem;
 static constexpr char watermark[] = "Created by Yuval Deutscher";
 
 static void printUsage() {
-    std::cerr << "Usage: cpq <in_file>.ou" << std::endl;
+    std::cerr << "Usage: cpq [-d] <in_file>.ou" << std::endl;
 }
 
 static std::string createOutputFilename(std::string input_filename) {
@@ -26,27 +27,43 @@ static std::string createOutputFilename(std::string input_filename) {
 }
 
 static auto parseArguments(cpq::Driver &driver, int argc, const char *argv[]) {
-    if (argc < 2) {
+    bool debug = false;
+    std::optional<std::string> in_file_name = std::nullopt;
+    for (int i = 1; i < argc; i++) {
+        std::string arg(argv[i]);
+        if (arg == "-d") {
+            debug = true;
+        } else if (!in_file_name) {
+            in_file_name = arg;
+        } else {
+            printUsage();
+            throw program_invocation_error("too many args");
+        }
+    }
+    if (!in_file_name) {
         printUsage();
         throw program_invocation_error("not enough args");
     }
-    std::string in_file_name(argv[1]);
-    driver.in.open(in_file_name);
-    std::string out_file_name(createOutputFilename(in_file_name));
+    driver.in.open(in_file_name.value());
+    std::string out_file_name(createOutputFilename(in_file_name.value()));
     driver.out.open(out_file_name);
-    return std::make_tuple(in_file_name, out_file_name);
+    return std::make_tuple(debug, in_file_name.value(), out_file_name);
 }
 
 int main(int argc, const char *argv[]) {
+    bool debug;
     std::string in_file_name{}, out_file_name{};
     bool success;
     try {
         cpq::Driver driver;
-        std::tie(in_file_name, out_file_name) =
+        std::tie(debug, in_file_name, out_file_name) =
             parseArguments(driver, argc, argv);
         std::cerr << watermark << std::endl;
         cpq::Lexer lexer(driver.in);
         cpq::Parser parse(lexer, driver);
+        if (debug) {
+            parse.set_debug_level(true);
+        }
         if (parse.parse()) {
             driver.on_error();
         }

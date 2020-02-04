@@ -48,7 +48,7 @@ while { return cpq::Parser::make_WHILE(loc); }
 "&&" { return cpq::Parser::make_OP_AND(loc); }
 \! { return cpq::Parser::make_OP_NOT(loc); }
 [[:digit:]]+ { return cpq::Parser::make_NUM_INT(atoi(yytext), loc); }
-[[:digit:]]+.[[:digit:]]* { return cpq::Parser::make_NUM_FLOAT(atof(yytext), loc); }
+[[:digit:]]+\.[[:digit:]]* { return cpq::Parser::make_NUM_FLOAT(atof(yytext), loc); }
 [[:alpha:]][[:alnum:]]* {
     if (strlen(yytext) > 9) {
         std::cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << std::endl;
