@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 class program_invocation_error : public std::logic_error {
-    using std::logic_error::logic_error;
+  using std::logic_error::logic_error;
 };
 
-#endif //CPQ_H
+#endif // CPQ_H
