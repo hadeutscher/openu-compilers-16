@@ -1,11 +1,10 @@
 Environment setup:
-apt install build-essential cmake bison flex
+apt install build-essential cmake bison flex ninja-build clang-9
+export CC=clang
+export CXX=clang
 
 Building:
-mkdir build
-cd build
-cmake ..
-make
+cmake -GNinja . && ninja
 
 Running:
-src/cpq ../src/test.ou
+src/cpq src/test.ou
