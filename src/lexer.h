@@ -18,15 +18,14 @@ public:
    };
 
    //get rid of override virtual function warning
-   using FlexLexer::yylex;
+   //using FlexLexer::yylex;
 
    virtual
-   int yylex( yy::parser::semantic_type * const lval, 
-              yy::parser::location_type *location );
+   yy::parser::symbol_type yylex2();
    // YY_DECL defined in mc_lexer.l
    // Method body created by flex in mc_lexer.yy.cc
 
-
+    yy::location loc;
 private:
    /* yyval ptr */
    yy::parser::semantic_type *yylval = nullptr;

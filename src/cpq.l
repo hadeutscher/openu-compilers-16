@@ -3,55 +3,54 @@
 #include <cmath>
 #include "lexer.h"
 #undef YY_DECL
-#define YY_DECL int cpq::cpqFlexLexer::yylex(yy::parser::semantic_type* sem, yy::parser::location_type* loc)
+#define YY_DECL yy::parser::symbol_type cpq::cpqFlexLexer::yylex2()
+#define yyterminate() return(yy::parser::make_END(loc));
 %}
 %option c++ noyywrap nounput noinput nodefault batch
 %option yyclass="cpq::cpqFlexLexer"
 %x COMMENT
 %%
-break { return yy::parser::token::BREAK; }
-case { return yy::parser::token::CASE; }
-default { return yy::parser::token::DEFAULT; }
-else { return yy::parser::token::ELSE; }
-float { return yy::parser::token::FLOAT; }
-if { return yy::parser::token::IF; }
-input { return yy::parser::token::INPUT; }
-int { return yy::parser::token::INT; }
-output { return yy::parser::token::OUTPUT; }
-static_cast { return yy::parser::token::STATIC_CAST; }
-switch { return yy::parser::token::SWITCH; }
-while { return yy::parser::token::WHILE; }
-\( { return yy::parser::token::LPAREN; }
-\) { return yy::parser::token::RPAREN; }
-\{ { return yy::parser::token::LCURL; }
-\} { return yy::parser::token::RCURL; }
-\, { return yy::parser::token::COMMA; }
-\: { return yy::parser::token::COLON; }
-\; { return yy::parser::token::SEMICOLON; }
-\= { return yy::parser::token::ASSIGN; }
-"==" { return yy::parser::token::OP_EQ; }
-"!=" { return yy::parser::token::OP_NE; }
-\< { return yy::parser::token::OP_LT; }
-\> { return yy::parser::token::OP_GT; }
-">=" { return yy::parser::token::OP_GEQ; }
-"<=" { return yy::parser::token::OP_LEQ; }
-\+ { return yy::parser::token::OP_ADD; }
-\- { return yy::parser::token::OP_SUB; }
-\* { return yy::parser::token::OP_MUL; }
-\/ { return yy::parser::token::OP_DIV; }
-"||" { return yy::parser::token::OP_OR; }
-"&&" { return yy::parser::token::OP_AND; }
-\! { return yy::parser::token::OP_NOT; }
-[[:digit:]]+ { yylval->build<int>(atoi(yytext)); return yy::parser::token::NUM_INT; }
-[[:digit:]]+.[[:digit:]]* { yylval->build<float>(atof(yytext)); return yy::parser::token::NUM_FLOAT; }
+break { return yy::parser::make_BREAK(loc); }
+case { return yy::parser::make_CASE(loc); }
+default { return yy::parser::make_DEFAULT(loc); }
+else { return yy::parser::make_ELSE(loc); }
+float { return yy::parser::make_FLOAT(loc); }
+if { return yy::parser::make_IF(loc); }
+input { return yy::parser::make_INPUT(loc); }
+int { return yy::parser::make_INT(loc); }
+output { return yy::parser::make_OUTPUT(loc); }
+static_cast { return yy::parser::make_STATIC_CAST(loc); }
+switch { return yy::parser::make_SWITCH(loc); }
+while { return yy::parser::make_WHILE(loc); }
+\( { return yy::parser::make_LPAREN(loc); }
+\) { return yy::parser::make_RPAREN(loc); }
+\{ { return yy::parser::make_LCURL(loc); }
+\} { return yy::parser::make_RCURL(loc); }
+\, { return yy::parser::make_COMMA(loc); }
+\: { return yy::parser::make_COLON(loc); }
+\; { return yy::parser::make_SEMICOLON(loc); }
+\= { return yy::parser::make_ASSIGN(loc); }
+"==" { return yy::parser::make_OP_EQ(loc); }
+"!=" { return yy::parser::make_OP_NE(loc); }
+\< { return yy::parser::make_OP_LT(loc); }
+\> { return yy::parser::make_OP_GT(loc); }
+">=" { return yy::parser::make_OP_GEQ(loc); }
+"<=" { return yy::parser::make_OP_LEQ(loc); }
+\+ { return yy::parser::make_OP_ADD(loc); }
+\- { return yy::parser::make_OP_SUB(loc); }
+\* { return yy::parser::make_OP_MUL(loc); }
+\/ { return yy::parser::make_OP_DIV(loc); }
+"||" { return yy::parser::make_OP_OR(loc); }
+"&&" { return yy::parser::make_OP_AND(loc); }
+\! { return yy::parser::make_OP_NOT(loc); }
+[[:digit:]]+ { return yy::parser::make_NUM_INT(atoi(yytext), loc); }
+[[:digit:]]+.[[:digit:]]* { return yy::parser::make_NUM_FLOAT(atof(yytext), loc); }
 [[:alpha:]][[:alnum:]]* {
     if (strlen(yytext) > 9) {
         std::cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << std::endl;
-        yylval->build<std::string>();
-        return yy::parser::token::ID;
+        return yy::parser::make_ID(std::string(), loc);
     } else {
-        yylval->build<std::string>(yytext);
-        return yy::parser::token::ID;
+        return yy::parser::make_ID(std::string(yytext), loc);
     }
 }
 "/*" { BEGIN(COMMENT); }

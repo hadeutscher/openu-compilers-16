@@ -7,6 +7,7 @@
 
 %}
 %language "c++"
+%define api.token.constructor
 %define api.value.type variant
 %define parse.assert
 %define parse.trace
@@ -20,12 +21,13 @@
 
 %code {
     #undef yylex
-    #define yylex lexer.yylex
+    #define yylex lexer.yylex2
 }
 
 %token BREAK CASE DEFAULT ELSE FLOAT IF INPUT INT OUTPUT STATIC_CAST SWITCH WHILE
 %token LPAREN RPAREN LCURL RCURL COMMA COLON SEMICOLON ASSIGN
 %token OP_EQ OP_NE OP_LT OP_GT OP_GEQ OP_LEQ OP_ADD OP_SUB OP_MUL OP_DIV OP_OR OP_AND OP_NOT
+%token END
 
 %token <int> NUM_INT
 %token <float> NUM_FLOAT
