@@ -1,23 +1,25 @@
 %{
 #include <iostream>
 
-#include <FlexLexer.h>
 #include "cpq.h"
 #include "environment.h"
+#include "lexer.h"
 
 %}
 %language "c++"
-%define api.token.constructor
 %define api.value.type variant
 %define parse.assert
 %define parse.trace
 %define parse.error verbose
 %locations
 
-
-%parse-param { yyFlexLexer& lexer }
+%code requires {
+    namespace cpq { class cpqFlexLexer; }
+}
+%parse-param { cpq::cpqFlexLexer& lexer }
 
 %code {
+    #undef yylex
     #define yylex lexer.yylex
 }
 

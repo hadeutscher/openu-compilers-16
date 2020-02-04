@@ -1,54 +1,57 @@
 %{
 #include <iostream>
 #include <cmath>
-#include "cpq.tab.hpp"
+#include "lexer.h"
+#undef YY_DECL
+#define YY_DECL int cpq::cpqFlexLexer::yylex(yy::parser::semantic_type* sem, yy::parser::location_type* loc)
 %}
-%option c++ noyywrap nounput noinput batch
+%option c++ noyywrap nounput noinput nodefault batch
+%option yyclass="cpq::cpqFlexLexer"
 %x COMMENT
 %%
-break { return yy::parser::make_BREAK(); }
-case { return yy::parser::make_CASE(); }
-default { return yy::parser::make_DEFAULT(); }
-else { return yy::parser::make_ELSE(); }
-float { return yy::parser::make_FLOAT(); }
-if { return yy::parser::make_IF(); }
-input { return yy::parser::make_INPUT(); }
-int { return yy::parser::make_INT(); }
-output { return yy::parser::make_OUTPUT(); }
-static_cast { return yy::parser::make_STATIC_CAST(); }
-switch { return yy::parser::make_SWITCH(); }
-while { return yy::parser::make_WHILE(); }
-\( { return yy::parser::make_LPAREN(); }
-\) { return yy::parser::make_RPAREN(); }
-\{ { return yy::parser::make_LCURL(); }
-\} { return yy::parser::make_RCURL(); }
-\, { return yy::parser::make_COMMA(); }
-\: { return yy::parser::make_COLON(); }
-\; { return yy::parser::make_SEMICOLON(); }
-\= { return yy::parser::make_ASSIGN(); }
-"==" { return yy::parser::make_OP_EQ(); }
-"!=" { return yy::parser::make_OP_NE(); }
-\< { return yy::parser::make_OP_LT(); }
-\> { return yy::parser::make_OP_GT(); }
-">=" { return yy::parser::make_OP_GEQ(); }
-"<=" { return yy::parser::make_OP_LEQ(); }
-\+ { return yy::parser::make_OP_ADD(); }
-\- { return yy::parser::make_OP_SUB(); }
-\* { return yy::parser::make_OP_MUL(); }
-\/ { return yy::parser::make_OP_DIV(); }
-"||" { return yy::parser::make_OP_OR(); }
-"&&" { return yy::parser::make_OP_AND(); }
-\! { return yy::parser::make_OP_NOT(); }
-[[:digit:]]+ { yylval.num_int.number = atoi(yytext); return yy::parser::make_NUM_INT(); }
-[[:digit:]]+.[[:digit:]]* { yylval.num_float.number = atof(yytext); return yy::parser::make_NUM_FLOAT(); }
+break { return yy::parser::token::BREAK; }
+case { return yy::parser::token::CASE; }
+default { return yy::parser::token::DEFAULT; }
+else { return yy::parser::token::ELSE; }
+float { return yy::parser::token::FLOAT; }
+if { return yy::parser::token::IF; }
+input { return yy::parser::token::INPUT; }
+int { return yy::parser::token::INT; }
+output { return yy::parser::token::OUTPUT; }
+static_cast { return yy::parser::token::STATIC_CAST; }
+switch { return yy::parser::token::SWITCH; }
+while { return yy::parser::token::WHILE; }
+\( { return yy::parser::token::LPAREN; }
+\) { return yy::parser::token::RPAREN; }
+\{ { return yy::parser::token::LCURL; }
+\} { return yy::parser::token::RCURL; }
+\, { return yy::parser::token::COMMA; }
+\: { return yy::parser::token::COLON; }
+\; { return yy::parser::token::SEMICOLON; }
+\= { return yy::parser::token::ASSIGN; }
+"==" { return yy::parser::token::OP_EQ; }
+"!=" { return yy::parser::token::OP_NE; }
+\< { return yy::parser::token::OP_LT; }
+\> { return yy::parser::token::OP_GT; }
+">=" { return yy::parser::token::OP_GEQ; }
+"<=" { return yy::parser::token::OP_LEQ; }
+\+ { return yy::parser::token::OP_ADD; }
+\- { return yy::parser::token::OP_SUB; }
+\* { return yy::parser::token::OP_MUL; }
+\/ { return yy::parser::token::OP_DIV; }
+"||" { return yy::parser::token::OP_OR; }
+"&&" { return yy::parser::token::OP_AND; }
+\! { return yy::parser::token::OP_NOT; }
+[[:digit:]]+ { yylval->build<int>(atoi(yytext)); return yy::parser::token::NUM_INT; }
+[[:digit:]]+.[[:digit:]]* { yylval->build<float>(atof(yytext)); return yy::parser::token::NUM_FLOAT; }
 [[:alpha:]][[:alnum:]]* {
     if (strlen(yytext) > 9) {
         std::cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << std::endl;
-        yylval.id.name = "";
-        return yy::parser::make_ID();
+        yylval->build<std::string>();
+        return yy::parser::token::ID;
     } else {
-        yylval.id.name = yytext;
-        return yy::parser::make_ID();
+        yylval->build<std::string>(yytext);
+        return yy::parser::token::ID;
     }
 }
 "/*" { BEGIN(COMMENT); }

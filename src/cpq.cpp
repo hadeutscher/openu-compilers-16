@@ -4,8 +4,8 @@
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-#include <FlexLexer.h>
 #include "cpq.tab.hpp"
+#include "lexer.h"
 #include "cpq.h"
 
 namespace fs = std::experimental::filesystem;
@@ -95,7 +95,7 @@ int main(int argc, const char *argv[])
         //std::tie(in_file_name, yyin, out_file_name, yyout) = parseArguments(argc, argv);
         parseArguments(argc, argv);
         std::cerr << watermark << std::endl;
-        yyFlexLexer lexer(yyin, yyout);
+        cpq::cpqFlexLexer lexer(yyin);
         yy::parser parse(lexer);
         if (parse.parse()) {
             cpq::CPQ.on_error();
