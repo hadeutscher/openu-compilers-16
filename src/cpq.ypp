@@ -3,8 +3,11 @@
 %{
 #include <iostream>
 
-#include "cpq.h"
+#include "sdt_types.h"
 #include "environment.h"
+#include "label.h"
+#include "driver.h"
+#include "variable.h"
 #include "lexer.h"
 
 %}
@@ -20,6 +23,7 @@
 %locations
 
 %code requires {
+    #include "sdt_types.h"
     namespace cpq { class Lexer; class Driver; }
 }
 %parse-param { cpq::Lexer& lexer }
@@ -33,18 +37,20 @@
 %token BREAK CASE DEFAULT ELSE FLOAT IF INPUT INT OUTPUT STATIC_CAST SWITCH WHILE
 %token LPAREN RPAREN LCURL RCURL COMMA COLON SEMICOLON ASSIGN
 %token OP_EQ OP_NE OP_LT OP_GT OP_GEQ OP_LEQ OP_ADD OP_SUB OP_MUL OP_DIV OP_OR OP_AND OP_NOT
-%token END
+%token END 0
 
 %token <int> NUM_INT
 %token <float> NUM_FLOAT
 %token <std::string> ID
+
+%nterm <Expression> num
 
 %%
 %start program;
 program : declarations stmt_block ;
 
 declarations : declarations declaration
-             | %empty;
+             | %empty ;
 
 declaration : idlist COLON type SEMICOLON ;
 
@@ -81,14 +87,14 @@ while_stmt : WHILE LPAREN boolexpr RPAREN stmt ;
 switch_stmt : SWITCH LPAREN expression RPAREN LCURL caselist
                            DEFAULT COLON stmtlist RCURL ;
 caselist : caselist CASE num COLON stmtlist
-         | %empty;
+         | %empty ;
 
 break_stmt : BREAK SEMICOLON ;
 
 stmt_block : LCURL stmtlist RCURL ;
 
 stmtlist  : stmtlist stmt
-          | %empty;
+          | %empty ;
 
 boolexpr : boolexpr OP_OR boolterm
          | boolterm
@@ -122,8 +128,8 @@ factor : LPAREN expression RPAREN
        | num
 	   ;
 
-num : NUM_FLOAT
-    | NUM_INT
+num : NUM_FLOAT { $$ = Expression(Type::Float); driver.gen("RASN", $$.var, $1); }
+    | NUM_INT { $$ = Expression(Type::Int); driver.gen("IASN", $$.var, $1); }
     ;
 %%
 void cpq::Parser::error (const location_type& l, const std::string& m)

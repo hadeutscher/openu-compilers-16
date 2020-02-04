@@ -13,11 +13,19 @@ class Driver {
     Driver() : in(), out(), _curr_address(1), _success(true) {}
     virtual ~Driver() {}
 
-    template <typename... Args> void gen(std::string op, Args... args) {
-        out << move(op);
-        auto foo = {write_arg(move(args))...};
+    template <typename... Args> void gen(std::string op, Args&&... args) {
+        out << std::move(op) << " ";
+        auto foo = {write_spaced_arg(std::forward<Args>(args))...};
         out << std::endl;
     }
+
+    template <typename Arg> int write_spaced_arg(Arg arg) {
+        out << " ";
+        write_arg(arg);
+        return 0; // Hack to make variadic templates work here
+    }
+    
+    void gen(std::string op) { out << std::move(op) << std::endl; }
 
     void gen_label(Label l);
     void backpatch();
@@ -29,6 +37,8 @@ class Driver {
 
   private:
     void write_arg(std::string arg);
+    void write_arg(int arg);
+    void write_arg(float arg);
     void write_arg(Label arg);
     void write_arg(Variable arg);
 

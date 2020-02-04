@@ -5,7 +5,17 @@
 #include <sstream>
 
 namespace cpq {
-void Driver::write_arg(std::string arg) { out << move(arg); }
+void Driver::write_arg(std::string arg) {
+    out << move(arg);
+}
+
+void Driver::write_arg(int arg) { 
+    out << arg;
+}
+
+void Driver::write_arg(float arg) { 
+    out << std::setprecision(2) << arg;
+}
 
 void Driver::write_arg(Label arg) {
     BackpatchHandle h = out.tellp();

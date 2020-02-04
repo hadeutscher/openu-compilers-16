@@ -6,13 +6,15 @@
 namespace cpq {
 class Variable {
 public:
-  Variable();
-  Variable(std::string name) : _name(name) {}
+  Variable() : _initialized(false), _name() {} ;
+  Variable(std::string name) : _initialized(true), _name(name) {}
   virtual ~Variable() {};
 
-  std::string name() const { return _name; }
+  std::string name();
 private:
   std::string _name;
+  bool _initialized;
+
   static int counter;
 };
 } // namespace cpq
