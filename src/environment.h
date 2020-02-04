@@ -1,25 +1,28 @@
 #ifndef CPQ_ENVIRONMENT_H
 #define CPQ_ENVIRONMENT_H
 
-#include <stack>
 #include <unordered_map>
+#include <stack>
 
-namespace cpq {
-enum class Type { Invalid = 0, Int, Float };
+namespace cpq
+{
+    enum class Type {
+        Invalid = 0,
+        Int,
+        Float
+    };
 
-class Environment {
-  using SymbolTable = std::unordered_map<std::string, Type>;
+    class Environment {
+        using SymbolTable = std::unordered_map<std::string, Type>;
+    public:
+        Environment() : sym_tab() {}
+        Type try_get(std::string var_name);
+        bool insert(std::string var_name, Type var_type);
+    private:
+        SymbolTable sym_tab;
+    };
 
-public:
-  Environment() : sym_tab() {}
-  Type try_get(std::string var_name);
-  bool insert(std::string var_name, Type var_type);
-
-private:
-  SymbolTable sym_tab;
-};
-
-static std::stack<Environment> Environments;
+    static std::stack<Environment> Environments;
 } // namespace cpq
 
-#endif // CPQ_ENVIRONMENT_H
+#endif //CPQ_ENVIRONMENT_H
