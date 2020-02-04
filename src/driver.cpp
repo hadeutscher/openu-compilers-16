@@ -13,6 +13,10 @@ void Driver::write_arg(Label arg) {
     _backpatches.insert({std::move(arg), std::move(h)});
 }
 
+void Driver::write_arg(Variable arg) {
+    out << arg.name();
+}
+
 void Driver::gen_label(Label l) {
     // Convert the current instruction number to 4 character string to save as
     // the label name

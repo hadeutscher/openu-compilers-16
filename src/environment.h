@@ -4,14 +4,16 @@
 #include <stack>
 #include <unordered_map>
 
+#include "sdt_types.h"
+
 namespace cpq {
-enum class Type { Invalid = 0, Int, Float };
 
 class Environment {
     using SymbolTable = std::unordered_map<std::string, Type>;
 
   public:
     Environment() : sym_tab() {}
+    virtual ~Environment() {}
     Type try_get(std::string var_name);
     bool insert(std::string var_name, Type var_type);
 

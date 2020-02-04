@@ -6,6 +6,7 @@ namespace cpq {
 class Label {
   public:
     Label() : value(counter++) {}
+    virtual ~Label() {}
     bool operator==(const Label &other) const { return value == other.value; }
 
     int value;

@@ -1,6 +1,7 @@
 #ifndef CPQ_DRIVER_H
 #define CPQ_DRIVER_H
 #include "label.h"
+#include "variable.h"
 #include <fstream>
 #include <unordered_map>
 
@@ -21,7 +22,7 @@ class Driver {
     void gen_label(Label l);
     void backpatch();
     void on_error() { _success = false; };
-    bool success() { return _success; }
+    bool success() const { return _success; }
 
     std::ifstream in;
     std::ofstream out;
@@ -29,6 +30,7 @@ class Driver {
   private:
     void write_arg(std::string arg);
     void write_arg(Label arg);
+    void write_arg(Variable arg);
 
     int _curr_address;
     bool _success;
