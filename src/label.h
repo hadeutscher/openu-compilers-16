@@ -5,13 +5,19 @@
 namespace cpq {
 class Label {
   public:
-    Label() : value(counter++) {}
+    // Default constructor only for Bison nonterminal construction
+    Label() : value(0) {}
     virtual ~Label() {}
     bool operator==(const Label &other) const { return value == other.value; }
 
     int value;
+    
+    static Label make_temp();
 
   private:
+    // This can be private as we do not support user-defined labels
+    Label(int value) : value(value) {}
+
     static int counter;
 };
 

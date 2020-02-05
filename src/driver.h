@@ -1,5 +1,6 @@
 #ifndef CPQ_DRIVER_H
 #define CPQ_DRIVER_H
+#include "environment.h"
 #include "label.h"
 #include "variable.h"
 #include <fstream>
@@ -10,7 +11,7 @@ using BackpatchHandle = int;
 
 class Driver {
   public:
-    Driver() : in(), out(), _curr_address(1), _success(true) {}
+    Driver() : in(), out(), _env(), _curr_address(1), _success(true) {}
     virtual ~Driver() {}
 
     template <typename... Args> void gen(std::string op, Args&&... args) {
@@ -19,9 +20,9 @@ class Driver {
         out << std::endl;
     }
 
-    template <typename Arg> int write_spaced_arg(Arg arg) {
+    template <typename Arg> int write_spaced_arg(Arg&& arg) {
         out << " ";
-        write_arg(arg);
+        write_arg(std::forward<Arg>(arg));
         return 0; // Hack to make variadic templates work here
     }
     
@@ -31,6 +32,9 @@ class Driver {
     void backpatch();
     void on_error() { _success = false; };
     bool success() const { return _success; }
+
+    Environment& env() { return _env; }
+    const Environment& env() const { return _env; }
 
     std::ifstream in;
     std::ofstream out;
@@ -46,6 +50,7 @@ class Driver {
     bool _success;
     std::unordered_multimap<Label, BackpatchHandle> _backpatches;
     std::unordered_map<Label, SerializedLabel> _labels;
+    Environment _env;
 };
 } // namespace cpq
 

@@ -3,20 +3,18 @@
 #include <cassert>
 
 namespace cpq {
-Type Environment::try_get(std::string var_name) {
-    auto it = sym_tab.find(var_name);
-    if (it == sym_tab.end()) {
-        return Type::Invalid;
+std::optional<Type> Environment::try_get(std::string var_name) {
+    auto it = _sym_tab.find(var_name);
+    if (it == _sym_tab.end()) {
+        return std::nullopt;
     } else {
         return it->second;
     }
 }
 
 bool Environment::insert(std::string var_name, cpq::Type var_type) {
-    assert(var_type != Type::Invalid);
-
     auto [iter, success] =
-        sym_tab.insert({std::move(var_name), std::move(var_type)});
+        _sym_tab.insert({std::move(var_name), std::move(var_type)});
     return success;
 }
 } // namespace cpq

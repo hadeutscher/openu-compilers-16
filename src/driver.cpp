@@ -6,7 +6,7 @@
 
 namespace cpq {
 void Driver::write_arg(std::string arg) {
-    out << move(arg);
+    out << std::move(arg);
 }
 
 void Driver::write_arg(int arg) { 
@@ -14,17 +14,21 @@ void Driver::write_arg(int arg) {
 }
 
 void Driver::write_arg(float arg) { 
-    out << std::setprecision(2) << arg;
+    out << arg;
 }
 
 void Driver::write_arg(Label arg) {
+    assert(arg.value > 0);
+
     BackpatchHandle h = out.tellp();
     out << "XXXX"; // Backpatching with non-binary data is fun
     _backpatches.insert({std::move(arg), std::move(h)});
 }
 
 void Driver::write_arg(Variable arg) {
-    out << arg.name();
+    assert(!arg.name.empty());
+
+    out << arg.name;
 }
 
 void Driver::gen_label(Label l) {

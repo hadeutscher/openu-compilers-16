@@ -1,0 +1,12 @@
+/* Finding minimum between two numbers */
+a: int;
+b: float;
+{
+    a = 42;
+    b = 3.141;
+
+    if (a < b)
+        output(a);
+    else
+        output(b);
+}

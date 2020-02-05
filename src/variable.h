@@ -6,15 +6,15 @@
 namespace cpq {
 class Variable {
 public:
-  Variable() : _initialized(false), _name() {} ;
-  Variable(std::string name) : _initialized(true), _name(name) {}
+  // Default constructor only for Bison nonterminal construction
+  Variable() : name() {} ;
+  Variable(std::string name) : name(std::move(name)) {}
   virtual ~Variable() {};
 
-  std::string name();
-private:
-  std::string _name;
-  bool _initialized;
+  std::string name;
 
+  static Variable make_temp();
+private:
   static int counter;
 };
 } // namespace cpq

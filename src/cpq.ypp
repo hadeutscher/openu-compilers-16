@@ -3,7 +3,7 @@
 %{
 #include <iostream>
 
-#include "sdt_types.h"
+#include "sdt_operations.h"
 #include "environment.h"
 #include "label.h"
 #include "driver.h"
@@ -43,7 +43,9 @@
 %token <float> NUM_FLOAT
 %token <std::string> ID
 
-%nterm <Expression> num
+%nterm <Type> type
+%nterm <std::vector<std::string>> idlist
+%nterm <Expression> expression term factor num
 
 %%
 %start program;
@@ -52,14 +54,19 @@ program : declarations stmt_block ;
 declarations : declarations declaration
              | %empty ;
 
-declaration : idlist COLON type SEMICOLON ;
+declaration : idlist COLON type SEMICOLON
+{
+    for (auto id : $1) {
+        driver.env().insert(id, $3);
+    }
+};
 
-type : INT
-     | FLOAT
+type : INT { $$ = Type::Int; }
+     | FLOAT { $$ = Type::Float; }
 	 ;
 
-idlist : idlist COMMA ID
-       | ID
+idlist : idlist COMMA ID { $$ = $1; $$.push_back($3); }
+       | ID { $$.push_back($1); }
 	   ;
 
 stmt : assignment_stmt
@@ -73,7 +80,22 @@ stmt : assignment_stmt
       | stmt_block
 	  ;
 
-assignment_stmt : ID ASSIGN expression SEMICOLON ;
+assignment_stmt : ID ASSIGN expression SEMICOLON 
+{
+    auto dest_type = get_var_type_or_error(driver, lexer, $1);
+    if (dest_type != Type::Float && $3.type == Type::Float) {
+        throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
+    }
+    auto src_var = cast_if_needed(driver, $3.var, $3.type, dest_type);
+    switch (dest_type) {
+        case Type::Int:
+            driver.gen("IASN", $1, src_var);
+            break;
+        case Type::Float:
+            driver.gen("RASN", $1, src_var);
+            break;
+    }
+};
 
 input_stmt : INPUT LPAREN ID RPAREN SEMICOLON ;
 output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON ;
@@ -113,23 +135,23 @@ boolfactor : OP_NOT LPAREN boolexpr RPAREN
            | expression  OP_GEQ  expression
 		   ;
 
-expression : expression OP_ADD term
-		   | expression OP_SUB term
-           | term
+expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, "IADD", "RADD", $1, $3); }
+		   | expression OP_SUB term { $$ = gen_arithmetic_op_expr(driver, "ISUB", "RSUB", $1, $3); }
+           | term { $$ = Expression($1); }
 		   ;
 
-term : term OP_MUL factor
-	 | term OP_DIV factor
-     | factor
+term : term OP_MUL factor { $$ = gen_arithmetic_op_expr(driver, "IMUL", "RMUL", $1, $3); }
+	 | term OP_DIV factor { $$ = gen_arithmetic_op_expr(driver, "IDIV", "RDIV", $1, $3); }
+     | factor { $$ = Expression($1); }
 	 ;
 
-factor : LPAREN expression RPAREN
-       | ID
-       | num
+factor : LPAREN expression RPAREN { $$ = Expression($2); }
+       | ID { $$ = Expression(get_var_type_or_error(driver, lexer, $1), $1); }
+       | num { $$ = Expression($1); }
 	   ;
 
-num : NUM_FLOAT { $$ = Expression(Type::Float); driver.gen("RASN", $$.var, $1); }
-    | NUM_INT { $$ = Expression(Type::Int); driver.gen("IASN", $$.var, $1); }
+num : NUM_FLOAT { $$ = Expression(Type::Float, Variable::make_temp()); driver.gen("RASN", $$.var, $1); }
+    | NUM_INT { $$ = Expression(Type::Int, Variable::make_temp()); driver.gen("IASN", $$.var, $1); }
     ;
 %%
 void cpq::Parser::error (const location_type& l, const std::string& m)

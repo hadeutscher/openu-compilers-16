@@ -2,15 +2,12 @@
 
 #include <sstream>
 
-int cpq::Variable::counter = 0;
+int cpq::Variable::counter = 1;
 
 namespace cpq {
-std::string Variable::name() {
-    if (!_initialized) {
-        std::stringstream ss;
-        ss << "var_" << std::hex << counter++;
-        _name = ss.str();
-    }
-    return _name;
+Variable Variable::make_temp() {
+    std::stringstream ss;
+    ss << "var_" << counter++;
+    return Variable(ss.str());
 }
 } // namespace cpq
