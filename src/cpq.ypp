@@ -88,19 +88,62 @@ assignment_stmt : ID ASSIGN expression SEMICOLON
     }
     auto src_var = cast_if_needed(driver, $3.var, $3.type, dest_type);
     switch (dest_type) {
-        case Type::Int:
-            driver.gen("IASN", $1, src_var);
-            break;
-        case Type::Float:
-            driver.gen("RASN", $1, src_var);
-            break;
+    case Type::Int:
+        driver.gen("IASN", $1, src_var);
+        break;
+    case Type::Float:
+        driver.gen("RASN", $1, src_var);
+        break;
     }
 };
 
-input_stmt : INPUT LPAREN ID RPAREN SEMICOLON ;
-output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON ;
+input_stmt : INPUT LPAREN ID RPAREN SEMICOLON
+{
+    auto dest_type = get_var_type_or_error(driver, lexer, $3);
+    switch (dest_type) {
+    case Type::Int:
+        driver.gen("IINP", $3);
+        break;
+    case Type::Float:
+        driver.gen("RINP", $3);
+        break;
+    }
+};
+output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON
+{
+    switch ($3.type) {
+    case Type::Int:
+        driver.gen("IPRT", $3.var);
+        break;
+    case Type::Float:
+        driver.gen("IPRT", $3.var);
+        break;
+    }
+};
 
-cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON ;
+cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON
+{
+    auto dest_type = get_var_type_or_error(driver, lexer, $1);
+    // We must cast here as long as type and the expression type differ;
+    // even if dest_type is the same as the expression type.
+    // This means that we might write 2 casts in this procedure, e.g. if the user
+    // static_casts a float to an int and then assigns it to float.
+    auto casted_var = cast_if_needed(driver, $8.var, $8.type, $5);
+    // The second cast, however, is implicit, and thus must obey implicit casting
+    // rules.
+    if (dest_type != Type::Float && $5 == Type::Float) {
+        throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
+    }
+    auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
+    switch (dest_type) {
+    case Type::Int:
+        driver.gen("IASN", $1, src_var);
+        break;
+    case Type::Float:
+        driver.gen("RASN", $1, src_var);
+        break;
+    }
+};
 
 if_stmt : IF LPAREN boolexpr RPAREN stmt ELSE stmt ;
 
