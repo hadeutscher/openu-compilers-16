@@ -7,7 +7,7 @@
 #define yyterminate() return(cpq::Parser::make_END(loc));
 #define YY_USER_ACTION loc.columns(yyleng);
 %}
-%option c++ noyywrap nounput noinput batch
+%option c++ noyywrap nounput noinput nodefault batch
 %option yyclass="cpq::Lexer"
 %x COMMENT
 %%
@@ -49,7 +49,7 @@ while { return cpq::Parser::make_WHILE(loc); }
 \! { return cpq::Parser::make_OP_NOT(loc); }
 [[:digit:]]+ { return cpq::Parser::make_NUM_INT(atoi(yytext), loc); }
 [[:digit:]]+\.[[:digit:]]* { return cpq::Parser::make_NUM_FLOAT(atof(yytext), loc); }
-[[:alpha:]_][[:alnum:]_]* {
+[[:alpha:]][[:alnum:]]* {
     if (strlen(yytext) > 9) {
         std::cerr << "Error in line " << yylineno << ": text \"" << yytext << "\" too long for ID token" << std::endl;
         return cpq::Parser::make_ID(std::string(), loc);
