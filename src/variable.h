@@ -5,17 +5,18 @@
 
 namespace cpq {
 class Variable {
-public:
-  // Default constructor only for Bison nonterminal construction
-  Variable() : name() {} ;
-  Variable(std::string name) : name(std::move(name)) {}
-  virtual ~Variable() {};
+  public:
+    // Default constructor only for Bison nonterminal construction
+    Variable() : name(){};
+    Variable(std::string name) : name(std::move(name)) {}
+    virtual ~Variable(){};
 
-  std::string name;
+    std::string name;
 
-  static Variable make_temp();
-private:
-  static int counter;
+    static Variable make_temp();
+
+  private:
+    static int counter;
 };
 } // namespace cpq
 

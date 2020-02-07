@@ -11,7 +11,7 @@ class Label {
     bool operator==(const Label &other) const { return value == other.value; }
 
     int value;
-    
+
     static Label make_temp();
 
   private:

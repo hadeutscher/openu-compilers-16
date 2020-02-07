@@ -1,21 +1,22 @@
 #ifndef CPQ_SDT_OPERATIONS_H
 #define CPQ_SDT_OPERATIONS_H
 
-#include "sdt_types.h"
-#include "driver.h"
 #include "cpq.tab.hpp"
+#include "driver.h"
 #include "lexer.h"
 #include "opcodes.h"
+#include "sdt_types.h"
 
 namespace cpq {
 Type consolidate_types(Type a, Type b) { return a == b ? a : Type::Float; }
 
-Variable cast_if_needed(Driver& driver, Variable var, Type old_type, Type new_type) {
+Variable cast_if_needed(Driver &driver, Variable var, Type old_type,
+                        Type new_type) {
     if (old_type == new_type) {
         return var;
     }
     auto result = Variable::make_temp();
-    switch(new_type) {
+    switch (new_type) {
     case Type::Int:
         driver.gen(Opcode::RTOI, result, var);
         break;
@@ -26,7 +27,8 @@ Variable cast_if_needed(Driver& driver, Variable var, Type old_type, Type new_ty
     return result;
 }
 
-Expression gen_arithmetic_op_expr(Driver& driver, Opcode intop, Opcode realop, Expression exp_1, Expression exp_2) {
+Expression gen_arithmetic_op_expr(Driver &driver, Opcode intop, Opcode realop,
+                                  Expression exp_1, Expression exp_2) {
     Expression result(consolidate_types(exp_1.type, exp_2.type));
     auto a = cast_if_needed(driver, exp_1.var, exp_1.type, result.type);
     auto b = cast_if_needed(driver, exp_2.var, exp_2.type, result.type);
@@ -41,7 +43,8 @@ Expression gen_arithmetic_op_expr(Driver& driver, Opcode intop, Opcode realop, E
     return result;
 }
 
-void gen_boolean_op(Driver& driver, ControlFlow flow, Opcode intop, Opcode realop, Expression exp_1, Expression exp_2) {
+void gen_boolean_op(Driver &driver, ControlFlow flow, Opcode intop,
+                    Opcode realop, Expression exp_1, Expression exp_2) {
     auto common_type = consolidate_types(exp_1.type, exp_2.type);
     auto result = Variable::make_temp();
     auto a = cast_if_needed(driver, exp_1.var, exp_1.type, common_type);
@@ -54,7 +57,7 @@ void gen_boolean_op(Driver& driver, ControlFlow flow, Opcode intop, Opcode realo
         driver.gen(realop, result, a, b);
         break;
     }
-    
+
     if (flow.ctrl_true && flow.ctrl_false) {
         // Both are jumps, simply generate true/false jump code
         driver.gen(Opcode::JMPZ, flow.ctrl_false.value(), result);
@@ -63,7 +66,8 @@ void gen_boolean_op(Driver& driver, ControlFlow flow, Opcode intop, Opcode realo
         // True flow is fallthrough, this is simple since we have ifFalse
         driver.gen(Opcode::JMPZ, flow.ctrl_false.value(), result);
     } else if (!flow.ctrl_false && flow.ctrl_true) {
-        // False flow is fallthrough; since we have no ifTrue instruction, we have to generate a logical NOT here
+        // False flow is fallthrough; since we have no ifTrue instruction, we
+        // have to generate a logical NOT here
         driver.gen(Opcode::IEQL, result, result, 0);
         driver.gen(Opcode::JMPZ, flow.ctrl_true.value(), result);
     } else {
@@ -71,7 +75,7 @@ void gen_boolean_op(Driver& driver, ControlFlow flow, Opcode intop, Opcode realo
     }
 }
 
-Type get_var_type_or_error(Driver& driver, Lexer& lexer, std::string var) {
+Type get_var_type_or_error(Driver &driver, Lexer &lexer, std::string var) {
     auto type = driver.env().try_get(var);
     if (!type) {
         throw cpq::Parser::syntax_error(lexer.loc, "unknown identifier " + var);

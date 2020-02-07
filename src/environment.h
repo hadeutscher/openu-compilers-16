@@ -1,10 +1,10 @@
 #ifndef CPQ_ENVIRONMENT_H
 #define CPQ_ENVIRONMENT_H
 
-#include <unordered_map>
-#include <vector>
 #include <functional>
 #include <optional>
+#include <unordered_map>
+#include <vector>
 
 #include "sdt_types.h"
 

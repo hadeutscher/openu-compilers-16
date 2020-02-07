@@ -26,7 +26,8 @@ struct Expression {
 
 struct ControlFlow {
     ControlFlow() : ctrl_true(), ctrl_false() {}
-    ControlFlow(std::optional<Label> ctrl_true, std::optional<Label> ctrl_false) : ctrl_true(ctrl_true), ctrl_false(ctrl_false) {}
+    ControlFlow(std::optional<Label> ctrl_true, std::optional<Label> ctrl_false)
+        : ctrl_true(ctrl_true), ctrl_false(ctrl_false) {}
     virtual ~ControlFlow() {}
 
     std::optional<Label> ctrl_true;
