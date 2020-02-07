@@ -1,6 +1,6 @@
 #include "cpq.h"
 
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -9,8 +9,6 @@
 #include "driver.h"
 #include "lexer.h"
 
-namespace fs = std::experimental::filesystem;
-
 static constexpr char watermark[] = "Created by Yuval Deutscher";
 
 static void printUsage() {
@@ -18,7 +16,7 @@ static void printUsage() {
 }
 
 static std::string createOutputFilename(std::string input_filename) {
-    fs::path path(input_filename);
+    std::filesystem::path path(input_filename);
     if (path.extension() != ".ou") {
         printUsage();
         throw program_invocation_error("invalid input file");
