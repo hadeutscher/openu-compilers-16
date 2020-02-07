@@ -1,4 +1,5 @@
 #include "opcodes.h"
+
 #include <cassert>
 
 namespace cpq {

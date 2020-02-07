@@ -1,16 +1,15 @@
 %skeleton "lalr1.cc"
 %require  "3.1"
 %{
-#include <iostream>
-
-#include "sdt_operations.h"
+#include "driver.h"
 #include "environment.h"
 #include "label.h"
-#include "driver.h"
-#include "variable.h"
 #include "lexer.h"
 #include "opcodes.h"
+#include "sdt_operations.h"
+#include "variable.h"
 
+#include <iostream>
 %}
 %language "c++"
 %defines

@@ -1,7 +1,8 @@
 %{
+#include "lexer.h"
+
 #include <iostream>
 #include <cmath>
-#include "lexer.h"
 #undef YY_DECL
 #define YY_DECL cpq::Parser::symbol_type cpq::Lexer::next_token()
 #define yyterminate() return(cpq::Parser::make_END(loc));
