@@ -53,7 +53,7 @@ static auto parseArguments(cpq::Driver &driver, int argc, const char *argv[]) {
 int main(int argc, const char *argv[]) {
     bool debug;
     std::string in_file_name{}, out_file_name{};
-    bool success;
+    bool success = false;
     try {
         cpq::Driver driver;
         std::tie(debug, in_file_name, out_file_name) =
@@ -64,18 +64,17 @@ int main(int argc, const char *argv[]) {
         if (debug) {
             parse.set_debug_level(true);
         }
-        if (parse.parse()) {
-            driver.on_error();
+        if (!parse.parse()) {
+            driver.backpatch();
+            driver.out << watermark << std::endl;
+            success = true;
         }
-        driver.backpatch();
-        driver.out << watermark << std::endl;
-        success = driver.success();
     } catch (const std::exception &e) {
         std::cerr << "Stopping due to error: " << e.what() << std::endl;
         success = false;
     }
     if (!success) {
         remove(out_file_name.c_str());
-        std::cerr << "Exited with no ouput due to error." << std::endl;
+        std::cerr << "Exited with no output due to error." << std::endl;
     }
 }

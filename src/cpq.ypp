@@ -14,7 +14,7 @@
 %language "c++"
 %defines
 %define api.namespace {cpq}
-%define parser_class_name {Parser}
+%define api.parser.class {Parser}
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
@@ -46,10 +46,9 @@
 %nterm <Type> type
 %nterm <std::vector<std::string>> idlist
 %nterm <Expression> expression term factor num
-
 %%
 %start program;
-program : declarations stmt_block ;
+program : declarations stmt_block { driver.gen("HALT"); } ;
 
 declarations : declarations declaration
              | %empty ;
@@ -121,36 +120,68 @@ output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON
     }
 };
 
-cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON
-{
-    auto dest_type = get_var_type_or_error(driver, lexer, $1);
-    // We must cast here as long as type and the expression type differ;
-    // even if dest_type is the same as the expression type.
-    // This means that we might write 2 casts in this procedure, e.g. if the user
-    // static_casts a float to an int and then assigns it to float.
-    auto casted_var = cast_if_needed(driver, $8.var, $8.type, $5);
-    // The second cast, however, is implicit, and thus must obey implicit casting
-    // rules.
-    if (dest_type != Type::Float && $5 == Type::Float) {
-        throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
+cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON {
+        auto dest_type = get_var_type_or_error(driver, lexer, $1);
+        // We must cast here as long as type and the expression type differ;
+        // even if dest_type is the same as the expression type.
+        // This means that we might write 2 casts in this procedure, e.g. if the user
+        // static_casts a float to an int and then assigns it to float.
+        auto casted_var = cast_if_needed(driver, $8.var, $8.type, $5);
+        // The second cast, however, is implicit, and thus must obey implicit casting
+        // rules.
+        if (dest_type != Type::Float && $5 == Type::Float) {
+            throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
+        }
+        auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
+        switch (dest_type) {
+        case Type::Int:
+            driver.gen("IASN", $1, src_var);
+            break;
+        case Type::Float:
+            driver.gen("RASN", $1, src_var);
+            break;
+        }
+    };
+
+if_stmt : IF LPAREN <Label>{
+        // Create the false case label
+        $$ = Label::make_temp();
     }
-    auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
-    switch (dest_type) {
-    case Type::Int:
-        driver.gen("IASN", $1, src_var);
-        break;
-    case Type::Float:
-        driver.gen("RASN", $1, src_var);
-        break;
+    <ControlFlow>{
+        $$ = ControlFlow(Fallthrough, $3);
+    } boolexpr RPAREN stmt ELSE {
+        driver.gen_label($3);
+    } stmt ;
+
+while_stmt : WHILE LPAREN <Label>{
+        // Create the loop head label and generate it here
+        $$ = Label::make_temp();
+        driver.gen_label($$);
     }
-};
+    <Label>{
+        // Create the loop end label
+        $$ = Label::make_temp();
+    }
+    <ControlFlow>{
+        $$ = ControlFlow(Fallthrough, $4);
+    } boolexpr RPAREN {
+        driver.enter_breakable_scope($4);
+    } stmt {
+        // Jump to the loop head; also end the loop scope and generate the end label
+        driver.gen("JMP", $3);
+        driver.gen_label(driver.exit_breakable_scope());
+    };
 
-if_stmt : IF LPAREN boolexpr RPAREN stmt ELSE stmt ;
-
-while_stmt : WHILE LPAREN boolexpr RPAREN stmt ;
-
-switch_stmt : SWITCH LPAREN expression RPAREN LCURL caselist
-                           DEFAULT COLON stmtlist RCURL ;
+switch_stmt : SWITCH LPAREN expression RPAREN LCURL <Variable>{
+        if ($3.type != Type::Int) {
+            throw syntax_error(lexer.loc, "cannot switch on an expression of non-integer type");
+        }
+        $$ = $3.var;
+        driver.enter_breakable_scope(Label::make_temp());
+    } caselist DEFAULT COLON stmtlist RCURL {
+        // End the switch scope and generate the end label
+        driver.gen_label(driver.exit_breakable_scope());
+    };
 caselist : caselist CASE num COLON stmtlist
          | %empty ;
 

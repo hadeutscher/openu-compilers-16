@@ -4,6 +4,7 @@
 #include "label.h"
 #include "variable.h"
 #include <fstream>
+#include <stack>
 #include <unordered_map>
 
 namespace cpq {
@@ -11,7 +12,7 @@ using BackpatchHandle = int;
 
 class Driver {
   public:
-    Driver() : in(), out(), _env(), _curr_address(1), _success(true) {}
+    Driver() : in(), out(), _env(), _curr_address(1) {}
     virtual ~Driver() {}
 
     template <typename... Args> void gen(std::string op, Args&&... args) {
@@ -26,15 +27,16 @@ class Driver {
         return 0; // Hack to make variadic templates work here
     }
     
-    void gen(std::string op) { out << std::move(op) << std::endl; }
-
+    void gen(std::string op) { out << std::move(op) << std::endl; _curr_address++; }
     void gen_label(Label l);
     void backpatch();
-    void on_error() { _success = false; };
-    bool success() const { return _success; }
 
     Environment& env() { return _env; }
     const Environment& env() const { return _env; }
+
+    Label get_scope_end() const { return _scope_ends.top(); }
+    void enter_breakable_scope(Label label) { _scope_ends.push(std::move(label)); }
+    Label exit_breakable_scope() { auto result = _scope_ends.top(); _scope_ends.pop(); return result; }
 
     std::ifstream in;
     std::ofstream out;
@@ -47,10 +49,10 @@ class Driver {
     void write_arg(Variable arg);
 
     int _curr_address;
-    bool _success;
     std::unordered_multimap<Label, BackpatchHandle> _backpatches;
     std::unordered_map<Label, SerializedLabel> _labels;
     Environment _env;
+    std::stack<Label> _scope_ends;
 };
 } // namespace cpq
 

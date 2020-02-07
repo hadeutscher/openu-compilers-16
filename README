@@ -1,7 +1,5 @@
 Environment setup:
-apt install build-essential cmake bison flex ninja-build clang-9
-export CC=clang
-export CXX=clang
+apt install build-essential cmake bison flex ninja-build
 
 Building:
 cmake -GNinja . && ninja
