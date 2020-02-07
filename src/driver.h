@@ -3,6 +3,7 @@
 #include "environment.h"
 #include "label.h"
 #include "variable.h"
+#include "opcodes.h"
 #include <fstream>
 #include <stack>
 #include <unordered_map>
@@ -15,8 +16,8 @@ class Driver {
     Driver() : in(), out(), _env(), _curr_address(1) {}
     virtual ~Driver() {}
 
-    template <typename... Args> void gen(std::string op, Args&&... args) {
-        out << std::move(op) << " ";
+    template <typename... Args> void gen(Opcode op, Args&&... args) {
+        out << get_opcode_name(op) << " ";
         auto foo = {write_spaced_arg(std::forward<Args>(args))...};
         out << std::endl;
         _curr_address++;
@@ -28,8 +29,8 @@ class Driver {
         return 0; // Hack to make variadic templates work here
     }
     
-    void gen(std::string op) {
-        out << std::move(op) << std::endl;
+    void gen(Opcode op) {
+        out << get_opcode_name(op) << std::endl;
         _curr_address++;
     }
     void gen_label(Label l);
@@ -46,9 +47,8 @@ class Driver {
     std::ofstream out;
 
   private:
-    void write_arg(std::string arg);
-    void write_arg(int arg);
-    void write_arg(float arg);
+    void write_arg(int arg) { out << arg; }
+    void write_arg(float arg) { out << arg; }
     void write_arg(Label arg);
     void write_arg(Variable arg);
 

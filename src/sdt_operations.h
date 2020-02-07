@@ -5,6 +5,7 @@
 #include "driver.h"
 #include "cpq.tab.hpp"
 #include "lexer.h"
+#include "opcodes.h"
 
 namespace cpq {
 Type consolidate_types(Type a, Type b) { return a == b ? a : Type::Float; }
@@ -16,16 +17,16 @@ Variable cast_if_needed(Driver& driver, Variable var, Type old_type, Type new_ty
     auto result = Variable::make_temp();
     switch(new_type) {
     case Type::Int:
-        driver.gen("RTOI", result, var);
+        driver.gen(Opcode::RTOI, result, var);
         break;
     case Type::Float:
-        driver.gen("ITOR", result, var);
+        driver.gen(Opcode::ITOR, result, var);
         break;
     }
     return result;
 }
 
-Expression gen_arithmetic_op_expr(Driver& driver, std::string intop, std::string realop, Expression exp_1, Expression exp_2) {
+Expression gen_arithmetic_op_expr(Driver& driver, Opcode intop, Opcode realop, Expression exp_1, Expression exp_2) {
     Expression result(consolidate_types(exp_1.type, exp_2.type));
     auto a = cast_if_needed(driver, exp_1.var, exp_1.type, result.type);
     auto b = cast_if_needed(driver, exp_2.var, exp_2.type, result.type);
@@ -40,7 +41,7 @@ Expression gen_arithmetic_op_expr(Driver& driver, std::string intop, std::string
     return result;
 }
 
-void gen_boolean_op(Driver& driver, ControlFlow flow, std::string intop, std::string realop, Expression exp_1, Expression exp_2) {
+void gen_boolean_op(Driver& driver, ControlFlow flow, Opcode intop, Opcode realop, Expression exp_1, Expression exp_2) {
     auto common_type = consolidate_types(exp_1.type, exp_2.type);
     auto result = Variable::make_temp();
     auto a = cast_if_needed(driver, exp_1.var, exp_1.type, common_type);
@@ -56,15 +57,15 @@ void gen_boolean_op(Driver& driver, ControlFlow flow, std::string intop, std::st
     
     if (flow.ctrl_true && flow.ctrl_false) {
         // Both are jumps, simply generate true/false jump code
-        driver.gen("JMPZ", flow.ctrl_false.value(), result);
-        driver.gen("JUMP", flow.ctrl_true.value());
+        driver.gen(Opcode::JMPZ, flow.ctrl_false.value(), result);
+        driver.gen(Opcode::JUMP, flow.ctrl_true.value());
     } else if (flow.ctrl_false && !flow.ctrl_true) {
         // True flow is fallthrough, this is simple since we have ifFalse
-        driver.gen("JMPZ", flow.ctrl_false.value(), result);
+        driver.gen(Opcode::JMPZ, flow.ctrl_false.value(), result);
     } else if (!flow.ctrl_false && flow.ctrl_true) {
         // False flow is fallthrough; since we have no ifTrue instruction, we have to generate a logical NOT here
-        driver.gen("IEQL", result, result, 0);
-        driver.gen("JMPZ", flow.ctrl_true.value(), result);
+        driver.gen(Opcode::IEQL, result, result, 0);
+        driver.gen(Opcode::JMPZ, flow.ctrl_true.value(), result);
     } else {
         assert(false);
     }

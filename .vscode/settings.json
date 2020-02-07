@@ -20,8 +20,6 @@
         "functional": "cpp",
         "iosfwd": "cpp",
         "iomanip": "cpp",
-        "*.ypp": "cpp",
-        "*.l": "cpp",
         "array": "cpp",
         "atomic": "cpp",
         "cctype": "cpp",
@@ -50,7 +48,9 @@
         "initializer_list": "cpp",
         "sstream": "cpp",
         "cinttypes": "cpp",
-        "typeinfo": "cpp"
+        "typeinfo": "cpp",
+        "iterator": "cpp",
+        "numeric": "cpp"
     },
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
     "cmake.configureOnOpen": true

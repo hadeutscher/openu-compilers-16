@@ -1,5 +1,5 @@
 %skeleton "lalr1.cc"
-%require  "3.0"
+%require  "3.1"
 %{
 #include <iostream>
 
@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "variable.h"
 #include "lexer.h"
+#include "opcodes.h"
 
 %}
 %language "c++"
@@ -48,7 +49,7 @@
 %nterm <Expression> expression term factor num
 %%
 %start program;
-program : declarations stmt_block { driver.gen("HALT"); } ;
+program : declarations stmt_block { driver.gen(Opcode::HALT); } ;
 
 declarations : declarations declaration
              | %empty ;
@@ -88,10 +89,10 @@ assignment_stmt : ID ASSIGN expression SEMICOLON
     auto src_var = cast_if_needed(driver, $3.var, $3.type, dest_type);
     switch (dest_type) {
     case Type::Int:
-        driver.gen("IASN", $1, src_var);
+        driver.gen(Opcode::IASN, $1, src_var);
         break;
     case Type::Float:
-        driver.gen("RASN", $1, src_var);
+        driver.gen(Opcode::RASN, $1, src_var);
         break;
     }
 };
@@ -101,10 +102,10 @@ input_stmt : INPUT LPAREN ID RPAREN SEMICOLON
     auto dest_type = get_var_type_or_error(driver, lexer, $3);
     switch (dest_type) {
     case Type::Int:
-        driver.gen("IINP", $3);
+        driver.gen(Opcode::IINP, $3);
         break;
     case Type::Float:
-        driver.gen("RINP", $3);
+        driver.gen(Opcode::RINP, $3);
         break;
     }
 };
@@ -112,10 +113,10 @@ output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON
 {
     switch ($3.type) {
     case Type::Int:
-        driver.gen("IPRT", $3.var);
+        driver.gen(Opcode::IPRT, $3.var);
         break;
     case Type::Float:
-        driver.gen("IPRT", $3.var);
+        driver.gen(Opcode::IPRT, $3.var);
         break;
     }
 };
@@ -135,10 +136,10 @@ cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN S
         auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
         switch (dest_type) {
         case Type::Int:
-            driver.gen("IASN", $1, src_var);
+            driver.gen(Opcode::IASN, $1, src_var);
             break;
         case Type::Float:
-            driver.gen("RASN", $1, src_var);
+            driver.gen(Opcode::RASN, $1, src_var);
             break;
         }
     };
@@ -153,7 +154,7 @@ if_stmt : IF LPAREN <Label>{
     <ControlFlow>{
         $$ = ControlFlow(Fallthrough, $3);
     } boolexpr RPAREN stmt {
-        driver.gen("JUMP", $4);
+        driver.gen(Opcode::JUMP, $4);
     } ELSE {
         driver.gen_label($3);
     } stmt {
@@ -175,7 +176,7 @@ while_stmt : WHILE LPAREN <Label>{
         driver.enter_breakable_scope($4);
     } stmt {
         // Jump to the loop head; also end the loop scope and generate the end label
-        driver.gen("JMP", $3);
+        driver.gen(Opcode::JUMP, $3);
         driver.gen_label(driver.exit_breakable_scope());
     };
 
@@ -197,15 +198,15 @@ caselist : caselist CASE num COLON <Label>{
         // Create the next-case label
         $$ = Label::make_temp();
         auto cond = Variable::make_temp();
-        driver.gen("IEQL", cond, $<Variable>0, $3.var);
-        driver.gen("JMPZ", $$, cond);
+        driver.gen(Opcode::IEQL, cond, $<Variable>0, $3.var);
+        driver.gen(Opcode::JMPZ, $$, cond);
     } stmtlist {
         // Generate the next-case label
         driver.gen_label($5);
     }
          | %empty ;
 
-break_stmt : BREAK SEMICOLON { driver.gen("JUMP", driver.get_scope_end()); } ;
+break_stmt : BREAK SEMICOLON { driver.gen(Opcode::JUMP, driver.get_scope_end()); } ;
 
 stmt_block : LCURL stmtlist RCURL ;
 
@@ -221,21 +222,21 @@ boolterm : boolterm OP_AND boolfactor
 		 ;
 
 boolfactor : OP_NOT LPAREN <ControlFlow>{ $$ = ControlFlow($<ControlFlow>0.ctrl_false, $<ControlFlow>0.ctrl_true); } boolexpr RPAREN
-           | expression  OP_EQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "IEQL", "REQL", $1, $3); }
-           | expression  OP_NE  expression { gen_boolean_op(driver, $<ControlFlow>0, "INQL", "RNQL", $1, $3); }
-           | expression  OP_LT  expression {  gen_boolean_op(driver, $<ControlFlow>0, "ILSS", "RLSS", $1, $3); }
-           | expression  OP_GT  expression { gen_boolean_op(driver, $<ControlFlow>0, "IGRT", "RGRT", $1, $3); }
-           | expression  OP_LEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "IGRT", "RGRT", $3, $1); }
-           | expression  OP_GEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "ILSS", "RLSS", $3, $1); }
+           | expression  OP_EQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IEQL, Opcode::REQL, $1, $3); }
+           | expression  OP_NE  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::INQL, Opcode::RNQL, $1, $3); }
+           | expression  OP_LT  expression {  gen_boolean_op(driver, $<ControlFlow>0, Opcode::ILSS, Opcode::RLSS, $1, $3); }
+           | expression  OP_GT  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IGRT, Opcode::RGRT, $1, $3); }
+           | expression  OP_LEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IGRT, Opcode::RGRT, $3, $1); }
+           | expression  OP_GEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::ILSS, Opcode::RLSS, $3, $1); }
 		   ;
 
-expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, "IADD", "RADD", $1, $3); }
-		   | expression OP_SUB term { $$ = gen_arithmetic_op_expr(driver, "ISUB", "RSUB", $1, $3); }
+expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, Opcode::IADD, Opcode::RADD, $1, $3); }
+		   | expression OP_SUB term { $$ = gen_arithmetic_op_expr(driver, Opcode::ISUB, Opcode::RSUB, $1, $3); }
            | term { $$ = Expression($1); }
 		   ;
 
-term : term OP_MUL factor { $$ = gen_arithmetic_op_expr(driver, "IMUL", "RMUL", $1, $3); }
-	 | term OP_DIV factor { $$ = gen_arithmetic_op_expr(driver, "IDIV", "RDIV", $1, $3); }
+term : term OP_MUL factor { $$ = gen_arithmetic_op_expr(driver, Opcode::IMLT, Opcode::RMLT, $1, $3); }
+	 | term OP_DIV factor { $$ = gen_arithmetic_op_expr(driver, Opcode::IDIV, Opcode::RDIV, $1, $3); }
      | factor { $$ = Expression($1); }
 	 ;
 
@@ -244,8 +245,8 @@ factor : LPAREN expression RPAREN { $$ = Expression($2); }
        | num { $$ = Expression($1); }
 	   ;
 
-num : NUM_FLOAT { $$ = Expression(Type::Float, Variable::make_temp()); driver.gen("RASN", $$.var, $1); }
-    | NUM_INT { $$ = Expression(Type::Int, Variable::make_temp()); driver.gen("IASN", $$.var, $1); }
+num : NUM_FLOAT { $$ = Expression(Type::Float, Variable::make_temp()); driver.gen(Opcode::RASN, $$.var, $1); }
+    | NUM_INT { $$ = Expression(Type::Int, Variable::make_temp()); driver.gen(Opcode::IASN, $$.var, $1); }
     ;
 %%
 void cpq::Parser::error (const location_type& l, const std::string& m)

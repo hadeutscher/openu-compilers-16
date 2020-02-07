@@ -11,4 +11,4 @@ std::string get_opcode_name(Opcode op) {
     }
     assert(false);
 }
-} // end namespace cpq
+} // namespace cpq

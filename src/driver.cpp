@@ -5,18 +5,6 @@
 #include <sstream>
 
 namespace cpq {
-void Driver::write_arg(std::string arg) {
-    out << std::move(arg);
-}
-
-void Driver::write_arg(int arg) { 
-    out << arg;
-}
-
-void Driver::write_arg(float arg) { 
-    out << arg;
-}
-
 void Driver::write_arg(Label arg) {
     assert(arg.value > 0);
 
