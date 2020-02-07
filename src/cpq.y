@@ -8,7 +8,6 @@
 #include "opcodes.h"
 #include "sdt_operations.h"
 #include "variable.h"
-
 #include <iostream>
 %}
 %language "c++"
