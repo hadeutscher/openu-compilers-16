@@ -1,0 +1,12 @@
+IASN  var_1 42
+IASN  a var_1
+RASN  var_2 3.141
+RASN  b var_2
+ITOR  var_4 a
+RLSS  var_3 var_4 b
+JMPZ  000a
+IPRT  a
+JUMP  000b
+IPRT  b
+HALT
+Created by Yuval Deutscher
