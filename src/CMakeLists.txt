@@ -16,10 +16,10 @@ add_custom_command(
         DEPENDS
             ${CMAKE_CURRENT_SOURCE_DIR}/opcodes.h
             ${CMAKE_CURRENT_SOURCE_DIR}/opcodes.template.cpp
-        COMMAND PYTHON_EXECUTABLE ${CMAKE_CURRENT_SOURCE_DIR}/reflector.py ${CMAKE_CURRENT_SOURCE_DIR}/opcodes}
+        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/reflector.py ${CMAKE_CURRENT_SOURCE_DIR}/opcodes ${CMAKE_CURRENT_BINARY_DIR}/opcodes.cpp
 )
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_executable(cpq cpq.cpp driver.cpp environment.cpp label.cpp variable.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
+add_executable(cpq cpq.cpp driver.cpp environment.cpp label.cpp variable.cpp ${CMAKE_CURRENT_BINARY_DIR}/opcodes.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
 target_link_libraries(cpq stdc++fs)

@@ -5,7 +5,7 @@ namespace cpq {
 std::string get_opcode_name(Opcode op) {
     switch (op) {
     {% for op in opcodes %}
-    case {{ op }}:
+    case Opcode::{{ op }}:
         return "{{ op }}";
     {% endfor %}
     }
