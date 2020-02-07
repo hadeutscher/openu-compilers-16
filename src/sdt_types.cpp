@@ -5,7 +5,7 @@
 #include <cassert>
 
 namespace cpq {
-void BooleanBinaryNode::gen(Driver& driver, ControlFlow flow) {
+void BooleanBinaryNode::gen(Driver &driver, ControlFlow flow) {
     switch (op) {
     case LogicalOperation::And:
         if (flow.ctrl_false) {
@@ -35,29 +35,35 @@ void BooleanBinaryNode::gen(Driver& driver, ControlFlow flow) {
     assert(false);
 }
 
-void BooleanNotNode::gen(Driver& driver, ControlFlow flow) {
+void BooleanNotNode::gen(Driver &driver, ControlFlow flow) {
     a->gen(driver, ControlFlow(flow.ctrl_false, flow.ctrl_true));
 }
 
-void BooleanLeafNode::gen(Driver& driver, ControlFlow flow) {
+void BooleanLeafNode::gen(Driver &driver, ControlFlow flow) {
     switch (op) {
     case CompareOperation::Equal:
-        gen_boolean_op(driver, std::move(flow), Opcode::IEQL, Opcode::REQL, a, b);
+        gen_boolean_op(driver, std::move(flow), Opcode::IEQL, Opcode::REQL, a,
+                       b);
         return;
     case CompareOperation::NotEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::INQL, Opcode::RNQL, a, b);
+        gen_boolean_op(driver, std::move(flow), Opcode::INQL, Opcode::RNQL, a,
+                       b);
         return;
     case CompareOperation::LessThan:
-        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, a, b);
+        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, a,
+                       b);
         return;
     case CompareOperation::GreaterThan:
-        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, a, b);
+        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, a,
+                       b);
         return;
     case CompareOperation::LessEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, b, a);
+        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, b,
+                       a);
         return;
     case CompareOperation::GreaterEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, b, a);
+        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, b,
+                       a);
         return;
     }
     assert(false);

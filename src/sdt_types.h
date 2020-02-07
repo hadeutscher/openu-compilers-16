@@ -2,8 +2,8 @@
 #define CPQ_SDT_TYPES_H
 
 #include <functional>
-#include <optional>
 #include <memory>
+#include <optional>
 
 #include "label.h"
 #include "variable.h"
@@ -38,53 +38,64 @@ struct ControlFlow {
 class Driver;
 
 class BooleanNode {
-public:
+  public:
     virtual ~BooleanNode() {}
-    virtual void gen(Driver& driver, ControlFlow flow) = 0;
+    virtual void gen(Driver &driver, ControlFlow flow) = 0;
 };
 
 class BooleanBinaryNode : public BooleanNode {
-public:
+  public:
     enum class LogicalOperation { And, Or };
 
     // The default constructor only appears here to allow usage by Bison
     BooleanBinaryNode() : BooleanNode(), a(), b(), op(LogicalOperation::And) {}
-    BooleanBinaryNode(std::unique_ptr<BooleanNode> a, std::unique_ptr<BooleanNode> b, LogicalOperation op) : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
+    BooleanBinaryNode(std::unique_ptr<BooleanNode> a,
+                      std::unique_ptr<BooleanNode> b, LogicalOperation op)
+        : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
     virtual ~BooleanBinaryNode() {}
 
     std::unique_ptr<BooleanNode> a;
     std::unique_ptr<BooleanNode> b;
     LogicalOperation op;
 
-    virtual void gen(Driver& driver, ControlFlow flow);
+    virtual void gen(Driver &driver, ControlFlow flow);
 };
 
 class BooleanNotNode : public BooleanNode {
-public:
+  public:
     // The default constructor only appears here to allow usage by Bison
     BooleanNotNode() : BooleanNode(), a() {}
-    BooleanNotNode(std::unique_ptr<BooleanNode> a) : BooleanNode(), a(std::move(a)) {}
+    BooleanNotNode(std::unique_ptr<BooleanNode> a)
+        : BooleanNode(), a(std::move(a)) {}
     virtual ~BooleanNotNode() {}
 
     std::unique_ptr<BooleanNode> a;
 
-    virtual void gen(Driver& driver, ControlFlow flow);
+    virtual void gen(Driver &driver, ControlFlow flow);
 };
 
 class BooleanLeafNode : public BooleanNode {
-public:
-    enum class CompareOperation { Equal, NotEqual, LessThan, GreaterThan, LessEqual, GreaterEqual };
+  public:
+    enum class CompareOperation {
+        Equal,
+        NotEqual,
+        LessThan,
+        GreaterThan,
+        LessEqual,
+        GreaterEqual
+    };
 
     // The default constructor only appears here to allow usage by Bison
     BooleanLeafNode() : BooleanNode(), a(), b(), op(CompareOperation::Equal) {}
-    BooleanLeafNode(Expression a, Expression b, CompareOperation op) : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
+    BooleanLeafNode(Expression a, Expression b, CompareOperation op)
+        : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
     virtual ~BooleanLeafNode() {}
 
     Expression a;
     Expression b;
     CompareOperation op;
 
-    virtual void gen(Driver& driver, ControlFlow flow);
+    virtual void gen(Driver &driver, ControlFlow flow);
 };
 } // namespace cpq
 
