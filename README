@@ -1,8 +1,35 @@
-Environment setup:
-apt install build-essential cmake bison flex ninja-build
+1. Environment setup
+() Prerequisites
+apt install build-essential cmake flex ninja-build
 
-Building:
-cmake -GNinja . && ninja
+(a) Bison
+We require Bison 3.1 or above which might not be in the repository, depending on the GNU/Linux distro used (see documentation for more info). Thus we compile Bison from sources.
+apt purge bison
+curl https://ftp.gnu.org/gnu/bison/bison-3.5.tar.xz --output bison-3.5.tar.xz
+tar -xvf bison-3.5.tar.xz
+cd bison-3.5
+./configure
+make
+make install
 
-Running:
+(b) GCC
+We require GCC v8 or above; if it is not the default compiler, we must set it as such.
+apt install gcc-8 g++-8
+export CC=gcc-8
+export CXX=g++-8
+
+(c) Python
+We require a Python 3.8 environment:
+apt install python3 python3-pip python3-venv python3.8 python3.8-venv
+python3.8 -m venv ~/.python3.8
+. ~/.python3.8/bin/activate
+pip install -U pip wheel
+pip install -r requirements.txt 
+
+2. Building
+mkdir build && cd build
+cmake -GNinja ..
+ninja
+
+3. Running
 src/cpq src/test.ou
