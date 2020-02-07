@@ -19,6 +19,7 @@ class Driver {
         out << std::move(op) << " ";
         auto foo = {write_spaced_arg(std::forward<Args>(args))...};
         out << std::endl;
+        _curr_address++;
     }
 
     template <typename Arg> int write_spaced_arg(Arg&& arg) {
@@ -27,7 +28,10 @@ class Driver {
         return 0; // Hack to make variadic templates work here
     }
     
-    void gen(std::string op) { out << std::move(op) << std::endl; _curr_address++; }
+    void gen(std::string op) {
+        out << std::move(op) << std::endl;
+        _curr_address++;
+    }
     void gen_label(Label l);
     void backpatch();
 

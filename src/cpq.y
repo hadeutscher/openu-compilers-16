@@ -146,12 +146,19 @@ cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN S
 if_stmt : IF LPAREN <Label>{
         // Create the false case label
         $$ = Label::make_temp();
+    } <Label>{
+        // Create the end label
+        $$ = Label::make_temp();
     }
     <ControlFlow>{
         $$ = ControlFlow(Fallthrough, $3);
-    } boolexpr RPAREN stmt ELSE {
+    } boolexpr RPAREN stmt {
+        driver.gen("JUMP", $4);
+    } ELSE {
         driver.gen_label($3);
-    } stmt ;
+    } stmt {
+        driver.gen_label($4);
+    } ;
 
 while_stmt : WHILE LPAREN <Label>{
         // Create the loop head label and generate it here
@@ -176,16 +183,29 @@ switch_stmt : SWITCH LPAREN expression RPAREN LCURL <Variable>{
         if ($3.type != Type::Int) {
             throw syntax_error(lexer.loc, "cannot switch on an expression of non-integer type");
         }
+        // Return the switching variable
         $$ = $3.var;
         driver.enter_breakable_scope(Label::make_temp());
     } caselist DEFAULT COLON stmtlist RCURL {
         // End the switch scope and generate the end label
         driver.gen_label(driver.exit_breakable_scope());
     };
-caselist : caselist CASE num COLON stmtlist
+caselist : caselist CASE num COLON <Label>{
+        if ($3.type != Type::Int) {
+            throw syntax_error(lexer.loc, "cannot switch-case on an expression of non-integer type");
+        }
+        // Create the next-case label
+        $$ = Label::make_temp();
+        auto cond = Variable::make_temp();
+        driver.gen("IEQL", cond, $<Variable>0, $3.var);
+        driver.gen("JMPZ", $$, cond);
+    } stmtlist {
+        // Generate the next-case label
+        driver.gen_label($5);
+    }
          | %empty ;
 
-break_stmt : BREAK SEMICOLON ;
+break_stmt : BREAK SEMICOLON { driver.gen("JUMP", driver.get_scope_end()); } ;
 
 stmt_block : LCURL stmtlist RCURL ;
 
@@ -200,13 +220,13 @@ boolterm : boolterm OP_AND boolfactor
          | boolfactor
 		 ;
 
-boolfactor : OP_NOT LPAREN boolexpr RPAREN
-           | expression  OP_EQ  expression
-           | expression  OP_NE  expression
-           | expression  OP_LT  expression
-           | expression  OP_GT  expression
-           | expression  OP_LEQ  expression
-           | expression  OP_GEQ  expression
+boolfactor : OP_NOT LPAREN <ControlFlow>{ $$ = ControlFlow($<ControlFlow>0.ctrl_false, $<ControlFlow>0.ctrl_true); } boolexpr RPAREN
+           | expression  OP_EQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "IEQL", "REQL", $1, $3); }
+           | expression  OP_NE  expression { gen_boolean_op(driver, $<ControlFlow>0, "INQL", "RNQL", $1, $3); }
+           | expression  OP_LT  expression {  gen_boolean_op(driver, $<ControlFlow>0, "ILSS", "RLSS", $1, $3); }
+           | expression  OP_GT  expression { gen_boolean_op(driver, $<ControlFlow>0, "IGRT", "RGRT", $1, $3); }
+           | expression  OP_LEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "IGRT", "RGRT", $3, $1); }
+           | expression  OP_GEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, "ILSS", "RLSS", $3, $1); }
 		   ;
 
 expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, "IADD", "RADD", $1, $3); }

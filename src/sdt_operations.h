@@ -31,13 +31,43 @@ Expression gen_arithmetic_op_expr(Driver& driver, std::string intop, std::string
     auto b = cast_if_needed(driver, exp_2.var, exp_2.type, result.type);
     switch (result.type) {
     case Type::Int:
-        driver.gen("IMUL", result.var, a, b);
+        driver.gen(intop, result.var, a, b);
         break;
     case Type::Float:
-        driver.gen("RMUL", result.var, a, b);
+        driver.gen(realop, result.var, a, b);
         break;
     }
     return result;
+}
+
+void gen_boolean_op(Driver& driver, ControlFlow flow, std::string intop, std::string realop, Expression exp_1, Expression exp_2) {
+    auto common_type = consolidate_types(exp_1.type, exp_2.type);
+    auto result = Variable::make_temp();
+    auto a = cast_if_needed(driver, exp_1.var, exp_1.type, common_type);
+    auto b = cast_if_needed(driver, exp_2.var, exp_2.type, common_type);
+    switch (common_type) {
+    case Type::Int:
+        driver.gen(intop, result, a, b);
+        break;
+    case Type::Float:
+        driver.gen(realop, result, a, b);
+        break;
+    }
+    
+    if (flow.ctrl_true && flow.ctrl_false) {
+        // Both are jumps, simply generate true/false jump code
+        driver.gen("JMPZ", flow.ctrl_false.value(), result);
+        driver.gen("JUMP", flow.ctrl_true.value());
+    } else if (flow.ctrl_false && !flow.ctrl_true) {
+        // True flow is fallthrough, this is simple since we have ifFalse
+        driver.gen("JMPZ", flow.ctrl_false.value(), result);
+    } else if (!flow.ctrl_false && flow.ctrl_true) {
+        // False flow is fallthrough; since we have no ifTrue instruction, we have to generate a logical NOT here
+        driver.gen("IEQL", result, result, 0);
+        driver.gen("JMPZ", flow.ctrl_true.value(), result);
+    } else {
+        assert(false);
+    }
 }
 
 Type get_var_type_or_error(Driver& driver, Lexer& lexer, std::string var) {
