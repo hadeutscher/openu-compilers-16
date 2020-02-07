@@ -46,6 +46,7 @@
 %nterm <Type> type
 %nterm <std::vector<std::string>> idlist
 %nterm <Expression> expression term factor num
+%nterm <std::unique_ptr<BooleanNode>> boolexpr boolterm boolfactor
 %%
 %start program;
 program : declarations stmt_block { driver.gen(Opcode::HALT); } ;
@@ -149,10 +150,9 @@ if_stmt : IF LPAREN <Label>{
     } <Label>{
         // Create the end label
         $$ = Label::make_temp();
-    }
-    <ControlFlow>{
-        $$ = ControlFlow(Fallthrough, $3);
-    } boolexpr RPAREN stmt {
+    } boolexpr {
+        $5->gen(driver, ControlFlow(Fallthrough, $3));
+    } RPAREN stmt {
         driver.gen(Opcode::JUMP, $4);
     } ELSE {
         driver.gen_label($3);
@@ -168,10 +168,9 @@ while_stmt : WHILE LPAREN <Label>{
     <Label>{
         // Create the loop end label
         $$ = Label::make_temp();
-    }
-    <ControlFlow>{
-        $$ = ControlFlow(Fallthrough, $4);
-    } boolexpr RPAREN {
+    } boolexpr {
+        $5->gen(driver, ControlFlow(Fallthrough, $4));
+    } RPAREN {
         driver.enter_breakable_scope($4);
     } stmt {
         // Jump to the loop head; also end the loop scope and generate the end label
@@ -212,21 +211,21 @@ stmt_block : LCURL stmtlist RCURL ;
 stmtlist  : stmtlist stmt
           | %empty ;
 
-boolexpr : boolexpr OP_OR boolterm
-         | boolterm
+boolexpr : boolexpr OP_OR boolterm { $$ = std::make_unique<BooleanBinaryNode>(std::move($1), std::move($3), BooleanBinaryNode::LogicalOperation::Or); }
+         | boolterm { $$ = std::move($1); }
 		 ;
 
-boolterm : boolterm OP_AND boolfactor
-         | boolfactor
+boolterm : boolterm OP_AND boolfactor { $$ = std::make_unique<BooleanBinaryNode>(std::move($1), std::move($3), BooleanBinaryNode::LogicalOperation::And); }
+         | boolfactor { $$ = std::move($1); }
 		 ;
 
-boolfactor : OP_NOT LPAREN <ControlFlow>{ $$ = ControlFlow($<ControlFlow>0.ctrl_false, $<ControlFlow>0.ctrl_true); } boolexpr RPAREN
-           | expression  OP_EQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IEQL, Opcode::REQL, $1, $3); }
-           | expression  OP_NE  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::INQL, Opcode::RNQL, $1, $3); }
-           | expression  OP_LT  expression {  gen_boolean_op(driver, $<ControlFlow>0, Opcode::ILSS, Opcode::RLSS, $1, $3); }
-           | expression  OP_GT  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IGRT, Opcode::RGRT, $1, $3); }
-           | expression  OP_LEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::IGRT, Opcode::RGRT, $3, $1); }
-           | expression  OP_GEQ  expression { gen_boolean_op(driver, $<ControlFlow>0, Opcode::ILSS, Opcode::RLSS, $3, $1); }
+boolfactor : OP_NOT LPAREN boolexpr RPAREN { $$ = std::make_unique<BooleanNotNode>(std::move($3)); }
+           | expression  OP_EQ  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::Equal); }
+           | expression  OP_NE  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::NotEqual); }
+           | expression  OP_LT  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::LessThan); }
+           | expression  OP_GT  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::GreaterThan); }
+           | expression  OP_LEQ  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::LessEqual); }
+           | expression  OP_GEQ  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::GreaterEqual); }
 		   ;
 
 expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, Opcode::IADD, Opcode::RADD, $1, $3); }

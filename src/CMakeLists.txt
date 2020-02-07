@@ -21,5 +21,5 @@ add_custom_command(
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_executable(cpq cpq.cpp driver.cpp environment.cpp label.cpp sdt_operations.cpp variable.cpp ${CMAKE_CURRENT_BINARY_DIR}/opcodes.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
+add_executable(cpq cpq.cpp driver.cpp environment.cpp label.cpp sdt_operations.cpp sdt_types.cpp variable.cpp ${CMAKE_CURRENT_BINARY_DIR}/opcodes.cpp ${BISON_CPQParser_OUTPUTS} ${FLEX_CPQLexer_OUTPUTS})
 target_link_libraries(cpq stdc++fs)
