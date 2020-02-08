@@ -32,4 +32,4 @@ cmake -GNinja ..
 ninja
 
 3. Running
-src/cpq src/test.ou
+src/cpq ../tests/test.ou
