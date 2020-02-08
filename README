@@ -33,3 +33,10 @@ ninja
 
 3. Running
 src/cpq ../tests/test.ou
+src/cpq ../tests/test_imm.ou
+src/cpq ../tests/test_casts.ou
+src/cpq ../tests/test_expressions.ou
+src/cpq ../tests/test_while.ou
+src/cpq ../tests/test_switch.ou
+src/cpq ../tests/test_error.ou
+src/cpq ../tests/test_multiple_errors.ou

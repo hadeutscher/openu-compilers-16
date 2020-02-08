@@ -42,11 +42,15 @@ static auto parseArguments(cpq::Driver &driver, int argc, const char *argv[]) {
         printUsage();
         throw program_invocation_error("not enough args");
     }
-    driver.in.exceptions(std::ifstream::failbit);
     driver.in.open(in_file_name.value());
+    if (driver.in.fail()) {
+        throw program_invocation_error("could not open input file");
+    }
     std::string out_file_name(createOutputFilename(in_file_name.value()));
-    driver.out.exceptions(std::ofstream::failbit);
     driver.out.open(out_file_name);
+    if (driver.out.fail()) {
+        throw program_invocation_error("could not open output file");
+    }
     return std::make_tuple(debug, in_file_name.value(), out_file_name);
 }
 
@@ -69,7 +73,7 @@ int main(int argc, const char *argv[]) {
             driver.out << watermark << std::endl;
             success = true;
         }
-    } catch (const std::exception &e) {
+    } catch (const program_invocation_error &e) {
         std::cerr << "Stopping due to error: " << e.what() << std::endl;
         success = false;
     }

@@ -24,6 +24,8 @@
 
 %code requires {
     #include "sdt_types.h"
+    #include <map>
+    #include <memory>
     namespace cpq { class Lexer; class Driver; }
 }
 %parse-param { cpq::Lexer& lexer }
@@ -45,7 +47,8 @@
 
 %nterm <Type> type
 %nterm <std::vector<std::string>> idlist
-%nterm <Expression> inplace_expression inplace_num
+%nterm <std::map<int, Label>> caselist
+%nterm <Expression> inplace_expression
 %nterm <std::unique_ptr<BooleanNode>> boolexpr boolterm boolfactor
 %nterm <std::unique_ptr<ExpressionNode>> expression term factor num
 %%
@@ -69,7 +72,7 @@ type : INT { $$ = Type::Int; }
      | FLOAT { $$ = Type::Float; }
 	 ;
 
-idlist : idlist COMMA ID { $$ = $1; $$.push_back($3); }
+idlist : idlist COMMA ID { $$ = std::move($1); $$.push_back($3); }
        | ID { $$.push_back($1); }
 	   ;
 
@@ -192,7 +195,11 @@ while_stmt : WHILE LPAREN <Label>{
         driver.gen_label(driver.exit_breakable_scope());
     };
 
-switch_stmt : SWITCH LPAREN inplace_expression RPAREN LCURL <Variable>{
+switch_stmt : SWITCH LPAREN inplace_expression RPAREN LCURL <Label>{
+        // Create a label for the switch "table" code and jump there
+        $$ = Label::make_temp();
+        driver.gen(Opcode::JUMP, $$);
+    } <Variable>{
         try {
             if ($3.type != Type::Int) {
                 throw syntax_error_wrapper("cannot switch on an expression of non-integer type");
@@ -203,40 +210,46 @@ switch_stmt : SWITCH LPAREN inplace_expression RPAREN LCURL <Variable>{
         } catch (const syntax_error_wrapper& e) {
             throw syntax_error(lexer.loc, e.what());
         }
-    } caselist DEFAULT COLON {
-        // Generate two NOPs to account for the last case jumper code
-        driver.gen(Opcode::JUMP, RelativeLabel(1));
-        driver.gen(Opcode::JUMP, RelativeLabel(1));
-    } stmtlist RCURL {
-            // End the switch scope and generate the end label
-            driver.gen_label(driver.exit_breakable_scope());
+    } caselist DEFAULT COLON <Label>{
+        // Create and generate a label for the default case
+        $$ = Label::make_temp();
+        driver.gen_label($$);
+    } stmtlist {
+        // Jump to the end after finishing the default case
+        driver.gen(Opcode::JUMP, driver.get_scope_end());
+    } RCURL {
+        // Now we begin the fun part. The expression code and the cases code have already been
+        // generated, and we have the respective labels. We now implement a switch "table" for
+        // a processor with no array-access instructions.
+        driver.gen_label($6); // We are the switch table
+        auto cond = Variable::make_temp();
+        for (const auto &[num, label] : $8) {
+            driver.gen(Opcode::INQL, cond, $7, num);
+            driver.gen(Opcode::JMPZ, label, cond);
+        }
+        // Finish by jumping to the default handler
+        driver.gen(Opcode::JUMP, $11);
+        // End the switch scope and generate the end label
+        driver.gen_label(driver.exit_breakable_scope());
     };
-caselist : caselist CASE inplace_num COLON <Label>{
+
+caselist : caselist CASE NUM_INT COLON <Label>{
+        // Create and generate the label for beginning of case
+        $$ = Label::make_temp();
+        driver.gen_label($$);
+    } stmtlist {
         try {
-            if ($3.type != Type::Int) {
-                throw syntax_error_wrapper("cannot switch-case on an expression of non-integer type");
+            $$ = std::move($1);
+            auto [iter, success] = $$.insert({$3, std::move($5)});
+            if (!success) {
+                throw syntax_error_wrapper("Case number already exists");
             }
-            // Create the next-case label
-            $$ = Label::make_temp();
-            auto cond = Variable::make_temp();
-            driver.gen(Opcode::IEQL, cond, $<Variable>0, $3.var);
-            driver.gen(Opcode::JMPZ, $$, cond);
-        } catch (const syntax_error_wrapper& e) {
+        } catch (syntax_error_wrapper& e) {
             throw syntax_error(lexer.loc, e.what());
         }
-    } stmtlist {
-        // We generate a skip 2 instructions ahead here.
-        // This is a hack used to get fallthrough working with switch-case.
-        // Since we generate statements on the fly, and we don't have lookup table support in Quad,
-        // we have to generate the compare/if at the head of every case. Since we do not know if the
-        // case statements are going to break or not, we have to generate a jump at the end of the case
-        // to skip the condition check of the next case in case (hah) the current wants to fallthrough.
-        // This is also fine since all switch statements end with a default.
-        driver.gen(Opcode::JUMP, RelativeLabel(3));
-        // Generate the next-case label
-        driver.gen_label($5);
     }
-         | %empty ;
+         | %empty { }
+         ;
 
 break_stmt : BREAK SEMICOLON { driver.gen(Opcode::JUMP, driver.get_scope_end()); } ;
 
@@ -284,8 +297,6 @@ factor : LPAREN expression RPAREN { $$ = std::move($2); }
     }
        | num { $$ = std::move($1); }
 	   ;
-
-inplace_num : num { $$ = $1->gen(driver); }
 
 num : NUM_FLOAT { $$ = std::make_unique<ExpressionLeafNode>(Expression(Type::Float, Variable(immediate_to_string($1)))); }
     | NUM_INT { $$ = std::make_unique<ExpressionLeafNode>(Expression(Type::Int, Variable(immediate_to_string($1)))); }
