@@ -1,12 +1,10 @@
-IASN  var_1 42
-IASN  a var_1
-RASN  var_2 3.141
-RASN  b var_2
-ITOR  var_4 a
-RLSS  var_3 var_4 b
-JMPZ  0010 var_3
+IASN  a 42
+RASN  b 3.141
+ITOR  var_2 a
+RLSS  var_1 var_2 b
+JMPZ  0008 var_1
 IPRT  a
-JUMP  0011
+JUMP  0009
 RPRT  b
 HALT
 Created by Yuval Deutscher

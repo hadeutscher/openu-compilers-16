@@ -265,7 +265,7 @@ term : term OP_MUL factor { $$ = std::make_unique<ExpressionBinaryNode>(std::mov
 factor : LPAREN expression RPAREN { $$ = std::move($2); }
        | ID { 
         try {
-            $$ = std::make_unique<ExpressionIdNode>(get_var_type_or_error(driver, $1), $1);
+            $$ = std::make_unique<ExpressionLeafNode>(Expression(get_var_type_or_error(driver, $1), $1));
         } catch (const syntax_error_wrapper& e) {
             throw syntax_error(lexer.loc, e.what());
         }
@@ -275,8 +275,8 @@ factor : LPAREN expression RPAREN { $$ = std::move($2); }
 
 inplace_num : num { $$ = $1->gen(driver); }
 
-num : NUM_FLOAT { $$ = std::make_unique<ExpressionFloatImmediateNode>($1); }
-    | NUM_INT { $$ = std::make_unique<ExpressionIntImmediateNode>($1); }
+num : NUM_FLOAT { $$ = std::make_unique<ExpressionLeafNode>(Expression(Type::Float, Variable(immediate_to_string($1)))); }
+    | NUM_INT { $$ = std::make_unique<ExpressionLeafNode>(Expression(Type::Int, Variable(immediate_to_string($1)))); }
     ;
 
 %%

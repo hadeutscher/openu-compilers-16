@@ -125,36 +125,13 @@ public:
     virtual Expression gen(Driver &driver);
 };
 
-class ExpressionIdNode : public ExpressionNode {
+class ExpressionLeafNode : public ExpressionNode {
 public:
-    ExpressionIdNode() : ExpressionNode(), type(Type::Int), name() {}
-    ExpressionIdNode(Type type, std::string name) : ExpressionNode(), type(type), name(std::move(name)) {}
-    virtual ~ExpressionIdNode() {}
+    ExpressionLeafNode() : ExpressionNode(), e() {}
+    ExpressionLeafNode(Expression e) : ExpressionNode(), e(std::move(e)) {}
+    virtual ~ExpressionLeafNode() {}
 
-    Type type;
-    std::string name;
-
-    virtual Expression gen(Driver &driver);
-};
-
-class ExpressionIntImmediateNode : public ExpressionNode {
-public:
-    ExpressionIntImmediateNode() : ExpressionNode(), x() {}
-    ExpressionIntImmediateNode(int x) : ExpressionNode(), x(x) {}
-    virtual ~ExpressionIntImmediateNode() {}
-
-    int x;
-
-    virtual Expression gen(Driver &driver);
-};
-
-class ExpressionFloatImmediateNode : public ExpressionNode {
-public:
-    ExpressionFloatImmediateNode() : ExpressionNode(), x() {}
-    ExpressionFloatImmediateNode(float x) : ExpressionNode(), x(x) {}
-    virtual ~ExpressionFloatImmediateNode() {}
-
-    float x;
+    Expression e;
 
     virtual Expression gen(Driver &driver);
 };

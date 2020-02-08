@@ -7,6 +7,8 @@
 #include "opcodes.h"
 #include "sdt_types.h"
 
+#include <sstream>
+
 namespace cpq {
 Variable cast_if_needed(Driver &driver, Variable var, Type old_type,
                         Type new_type);
@@ -18,5 +20,12 @@ void gen_boolean_op(Driver &driver, ControlFlow flow, Opcode intop,
                     Opcode realop, Expression exp_1, Expression exp_2);
 
 Type get_var_type_or_error(Driver &driver, std::string var);
+
+template <typename T>
+std::string immediate_to_string(T x) {
+    std::ostringstream ss;
+    ss << x;
+    return ss.str();
+}
 } // namespace cpq
 #endif // CPQ_SDT_OPERATIONS_H

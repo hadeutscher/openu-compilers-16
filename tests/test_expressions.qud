@@ -7,27 +7,23 @@ IDIV  var_4 d e
 IDIV  var_5 e b
 ISUB  var_6 var_5 var_4
 ILSS  var_7 var_6 var_3
-JMPZ  0017 var_7
+JMPZ  0016 var_7
 IGRT  var_8 d c
 IEQL  var_8 var_8 0
-JMPZ  0017 var_8
-RASN  var_9 1
-RPRT  var_9
-JUMP  0019
-RASN  var_10 0
-RPRT  var_10
+JMPZ  0016 var_8
+IPRT  1
+JUMP  0017
+IPRT  0
+ITOR  var_10 a
+RLSS  var_9 var_10 f
+IEQL  var_9 var_9 0
+JMPZ  0025 var_9
 ITOR  var_12 a
-RLSS  var_11 var_12 f
-IEQL  var_11 var_11 0
-JMPZ  0027 var_11
-ITOR  var_14 a
-RADD  var_13 var_14 i
-RLSS  var_15 var_13 f
-JMPZ  0030 var_15
-RASN  var_16 1
-RPRT  var_16
-JUMP  0032
-RASN  var_17 0
-RPRT  var_17
+RADD  var_11 var_12 i
+RLSS  var_13 var_11 f
+JMPZ  0027 var_13
+IPRT  1
+JUMP  0028
+IPRT  0
 HALT
 Created by Yuval Deutscher

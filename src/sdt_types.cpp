@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "sdt_operations.h"
 #include <cassert>
+#include <sstream>
 
 namespace cpq {
 void BooleanBinaryNode::gen(Driver &driver, ControlFlow flow) {
@@ -83,19 +84,7 @@ Expression ExpressionBinaryNode::gen(Driver &driver) {
     assert(false);
 }
 
-Expression ExpressionIdNode::gen(Driver &driver) {
-    return Expression(type, name);
-}
-
-Expression ExpressionIntImmediateNode::gen(Driver &driver) {
-    Expression result(Type::Int, Variable::make_temp());
-    driver.gen(Opcode::IASN, result.var, x);
-    return result;
-}
-
-Expression ExpressionFloatImmediateNode::gen(Driver &driver) {
-    Expression result(Type::Float, Variable::make_temp());
-    driver.gen(Opcode::RASN, result.var, x);
-    return result;
+Expression ExpressionLeafNode::gen(Driver &driver) {
+    return e;
 }
 } // namespace cpq
