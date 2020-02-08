@@ -2,7 +2,10 @@ i: int;
 {
   i = 0;
   while (i < 10) {
-    output(i);
     i = i + 1;
+    if (i == 42)
+      break;
+    else
+      output(i);
   }
 }

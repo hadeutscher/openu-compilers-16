@@ -68,7 +68,7 @@ int main(int argc, const char *argv[]) {
         if (debug) {
             parse.set_debug_level(true);
         }
-        if (!parse.parse()) {
+        if (!parse.parse() && driver.success()) {
             driver.backpatch();
             driver.out << watermark << std::endl;
             success = true;

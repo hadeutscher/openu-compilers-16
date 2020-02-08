@@ -1,9 +1,13 @@
 IASN  i 0
 ILSS  var_1 i 10
-JMPZ  0008 var_1
-IPRT  i
+JMPZ  0012 var_1
 IADD  var_2 i 1
 IASN  i var_2
+IEQL  var_3 i 42
+JMPZ  0010 var_3
+JUMP  0012
+JUMP  0011
+IPRT  i
 JUMP  0002
 HALT
 Created by Yuval Deutscher

@@ -305,5 +305,6 @@ num : NUM_FLOAT { $$ = std::make_unique<ExpressionLeafNode>(Expression(Type::Flo
 %%
 void cpq::Parser::error (const location_type& l, const std::string& m)
 {
-  std::cerr << l << ": " << m << std::endl;
+    std::cerr << l << ": " << m << std::endl;
+    driver.on_error();
 }

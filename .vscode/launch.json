@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/src/cpq",
-            "args": ["-d", "${workspaceFolder}/tests/test_switch.ou"],
+            "args": ["-d", "${workspaceFolder}/tests/test_error.ou"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

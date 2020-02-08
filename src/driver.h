@@ -13,7 +13,7 @@ using BackpatchHandle = int;
 
 class Driver {
   public:
-    Driver() : in(), out(), _env(), _curr_address(1) {}
+    Driver() : _success(true), in(), out(), _env(), _curr_address(1) {}
     virtual ~Driver() {}
 
     template <typename... Args> void gen(Opcode op, Args &&... args) {
@@ -52,6 +52,9 @@ class Driver {
     std::ifstream in;
     std::ofstream out;
 
+    bool success() const { return _success; }
+    void on_error() { _success = false; }
+
   private:
     void write_arg(int arg) { out << arg; }
     void write_arg(float arg) { out << arg; }
@@ -59,6 +62,7 @@ class Driver {
     void write_arg(RelativeLabel arg);
     void write_arg(Variable arg);
 
+    bool _success;
     int _curr_address;
     std::unordered_multimap<Label, BackpatchHandle> _backpatches;
     std::unordered_map<Label, SerializedLabel> _labels;
