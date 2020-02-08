@@ -7,6 +7,6 @@ RLSS  var_3 var_4 b
 JMPZ  0010 var_3
 IPRT  a
 JUMP  0011
-IPRT  b
+RPRT  b
 HALT
 Created by Yuval Deutscher

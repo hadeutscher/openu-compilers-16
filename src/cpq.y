@@ -276,7 +276,7 @@ factor : LPAREN expression RPAREN { $$ = std::move($2); }
 inplace_num : num { $$ = $1->gen(driver); }
 
 num : NUM_FLOAT { $$ = std::make_unique<ExpressionFloatImmediateNode>($1); }
-    | NUM_INT { $$ = std::make_unique<ExpressionFloatImmediateNode>($1); }
+    | NUM_INT { $$ = std::make_unique<ExpressionIntImmediateNode>($1); }
     ;
 
 %%
