@@ -42,6 +42,12 @@ class BooleanNode {
     virtual void gen(Driver &driver, ControlFlow flow) = 0;
 };
 
+class ExpressionNode {
+public:
+    virtual ~ExpressionNode() {}
+    virtual Expression gen(Driver &driver) = 0;
+};
+
 class BooleanBinaryNode : public BooleanNode {
   public:
     enum class LogicalOperation { And, Or };
@@ -86,15 +92,71 @@ class BooleanLeafNode : public BooleanNode {
 
     // The default constructor only appears here to allow usage by Bison
     BooleanLeafNode() : BooleanNode(), a(), b(), op(CompareOperation::Equal) {}
-    BooleanLeafNode(Expression a, Expression b, CompareOperation op)
+    BooleanLeafNode(std::unique_ptr<ExpressionNode> a, std::unique_ptr<ExpressionNode> b, CompareOperation op)
         : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
     virtual ~BooleanLeafNode() {}
 
-    Expression a;
-    Expression b;
+    std::unique_ptr<ExpressionNode> a;
+    std::unique_ptr<ExpressionNode> b;
     CompareOperation op;
 
     virtual void gen(Driver &driver, ControlFlow flow);
+};
+
+class ExpressionBinaryNode : public ExpressionNode {
+public:
+    enum class ArithmeticOperation {
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+    };
+
+    // The default constructor only appears here to allow usage by Bison
+    ExpressionBinaryNode() : ExpressionNode(), a(), b(), op(ArithmeticOperation::Add) {}
+    ExpressionBinaryNode(std::unique_ptr<ExpressionNode> a, std::unique_ptr<ExpressionNode> b, ArithmeticOperation op)
+        : ExpressionNode(), a(std::move(a)), b(std::move(b)), op(op) {}
+    virtual ~ExpressionBinaryNode() {}
+
+    std::unique_ptr<ExpressionNode> a;
+    std::unique_ptr<ExpressionNode> b;
+    ArithmeticOperation op;
+
+    virtual Expression gen(Driver &driver);
+};
+
+class ExpressionIdNode : public ExpressionNode {
+public:
+    ExpressionIdNode() : ExpressionNode(), type(Type::Int), name() {}
+    ExpressionIdNode(Type type, std::string name) : ExpressionNode(), type(type), name(std::move(name)) {}
+    virtual ~ExpressionIdNode() {}
+
+    Type type;
+    std::string name;
+
+    virtual Expression gen(Driver &driver);
+};
+
+class ExpressionIntImmediateNode : public ExpressionNode {
+public:
+    ExpressionIntImmediateNode() : ExpressionNode(), x() {}
+    ExpressionIntImmediateNode(int x) : ExpressionNode(), x(x) {}
+    virtual ~ExpressionIntImmediateNode() {}
+
+    int x;
+
+    virtual Expression gen(Driver &driver);
+};
+
+class ExpressionFloatImmediateNode : public ExpressionNode {
+public:
+    ExpressionFloatImmediateNode() : ExpressionNode(), x() {}
+    ExpressionFloatImmediateNode(float x) : ExpressionNode(), x(x) {}
+    virtual ~ExpressionFloatImmediateNode() {}
+
+    float x;
+
+    virtual Expression gen(Driver &driver);
 };
 } // namespace cpq
 

@@ -17,6 +17,6 @@ Expression gen_arithmetic_op_expr(Driver &driver, Opcode intop, Opcode realop,
 void gen_boolean_op(Driver &driver, ControlFlow flow, Opcode intop,
                     Opcode realop, Expression exp_1, Expression exp_2);
 
-Type get_var_type_or_error(Driver &driver, Lexer &lexer, std::string var);
+Type get_var_type_or_error(Driver &driver, std::string var);
 } // namespace cpq
 #endif // CPQ_SDT_OPERATIONS_H

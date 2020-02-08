@@ -1,6 +1,7 @@
 %skeleton "lalr1.cc"
 %require  "3.1"
 %{
+#include "cpq.h"
 #include "driver.h"
 #include "environment.h"
 #include "label.h"
@@ -44,8 +45,9 @@
 
 %nterm <Type> type
 %nterm <std::vector<std::string>> idlist
-%nterm <Expression> expression term factor num
+%nterm <Expression> inplace_expression inplace_num
 %nterm <std::unique_ptr<BooleanNode>> boolexpr boolterm boolfactor
+%nterm <std::unique_ptr<ExpressionNode>> expression term factor num
 %%
 %start program;
 program : declarations stmt_block { driver.gen(Opcode::HALT); } ;
@@ -53,14 +55,13 @@ program : declarations stmt_block { driver.gen(Opcode::HALT); } ;
 declarations : declarations declaration
              | %empty ;
 
-declaration : idlist COLON type SEMICOLON
-{
-    for (auto id : $1) {
-        if (!driver.env().insert(id, $3)) {
-            throw syntax_error(lexer.loc, "unable to create a variable with name " + id);
+declaration : idlist COLON type SEMICOLON {
+        for (auto id : $1) {
+            if (!driver.env().insert(id, $3)) {
+                throw syntax_error(lexer.loc, "unable to create a variable with name " + id);
+            }
         }
     }
-}
            | error SEMICOLON // Skip to semicolon on error
            ;
 
@@ -84,67 +85,76 @@ stmt : assignment_stmt
 	  | error SEMICOLON // Skip to semicolon on error
       ;
 
-assignment_stmt : ID ASSIGN expression SEMICOLON 
-{
-    auto dest_type = get_var_type_or_error(driver, lexer, $1);
-    if (dest_type != Type::Float && $3.type == Type::Float) {
-        throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
-    }
-    auto src_var = cast_if_needed(driver, $3.var, $3.type, dest_type);
-    switch (dest_type) {
-    case Type::Int:
-        driver.gen(Opcode::IASN, $1, src_var);
-        break;
-    case Type::Float:
-        driver.gen(Opcode::RASN, $1, src_var);
-        break;
-    }
-};
-
-input_stmt : INPUT LPAREN ID RPAREN SEMICOLON
-{
-    auto dest_type = get_var_type_or_error(driver, lexer, $3);
-    switch (dest_type) {
-    case Type::Int:
-        driver.gen(Opcode::IINP, $3);
-        break;
-    case Type::Float:
-        driver.gen(Opcode::RINP, $3);
-        break;
-    }
-};
-output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON
-{
-    switch ($3.type) {
-    case Type::Int:
-        driver.gen(Opcode::IPRT, $3.var);
-        break;
-    case Type::Float:
-        driver.gen(Opcode::RPRT, $3.var);
-        break;
-    }
-};
-
-cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN expression RPAREN SEMICOLON {
-        auto dest_type = get_var_type_or_error(driver, lexer, $1);
-        // We must cast here as long as type and the expression type differ;
-        // even if dest_type is the same as the expression type.
-        // This means that we might write 2 casts in this procedure, e.g. if the user
-        // static_casts a float to an int and then assigns it to float.
-        auto casted_var = cast_if_needed(driver, $8.var, $8.type, $5);
-        // The second cast, however, is implicit, and thus must obey implicit casting
-        // rules.
-        if (dest_type != Type::Float && $5 == Type::Float) {
-            throw syntax_error(lexer.loc, "cannot implicitly convert float to int");
+assignment_stmt : ID ASSIGN inplace_expression SEMICOLON {
+        try {
+            auto dest_type = get_var_type_or_error(driver, $1);
+            if (dest_type != Type::Float && $3.type == Type::Float) {
+                throw syntax_error_wrapper("cannot implicitly convert float to int");
+            }
+            auto src_var = cast_if_needed(driver, $3.var, $3.type, dest_type);
+            switch (dest_type) {
+            case Type::Int:
+                driver.gen(Opcode::IASN, $1, src_var);
+                break;
+            case Type::Float:
+                driver.gen(Opcode::RASN, $1, src_var);
+                break;
+            }
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
         }
-        auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
-        switch (dest_type) {
+    };
+
+input_stmt : INPUT LPAREN ID RPAREN SEMICOLON {
+        try {
+            auto dest_type = get_var_type_or_error(driver, $3);
+            switch (dest_type) {
+            case Type::Int:
+                driver.gen(Opcode::IINP, $3);
+                break;
+            case Type::Float:
+                driver.gen(Opcode::RINP, $3);
+                break;
+            }
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
+        }
+    };
+output_stmt : OUTPUT LPAREN inplace_expression RPAREN SEMICOLON {
+        switch ($3.type) {
         case Type::Int:
-            driver.gen(Opcode::IASN, $1, src_var);
+            driver.gen(Opcode::IPRT, $3.var);
             break;
         case Type::Float:
-            driver.gen(Opcode::RASN, $1, src_var);
+            driver.gen(Opcode::RPRT, $3.var);
             break;
+        }
+    };
+
+cast_stmt : ID ASSIGN STATIC_CAST LPAREN type RPAREN  LPAREN inplace_expression RPAREN SEMICOLON {
+        try {
+            auto dest_type = get_var_type_or_error(driver, $1);
+            // We must cast here as long as type and the expression type differ;
+            // even if dest_type is the same as the expression type.
+            // This means that we might write 2 casts in this procedure, e.g. if the user
+            // static_casts a float to an int and then assigns it to float.
+            auto casted_var = cast_if_needed(driver, $8.var, $8.type, $5);
+            // The second cast, however, is implicit, and thus must obey implicit casting
+            // rules.
+            if (dest_type != Type::Float && $5 == Type::Float) {
+                throw syntax_error_wrapper("cannot implicitly convert float to int");
+            }
+            auto src_var = cast_if_needed(driver, casted_var, $5, dest_type);
+            switch (dest_type) {
+            case Type::Int:
+                driver.gen(Opcode::IASN, $1, src_var);
+                break;
+            case Type::Float:
+                driver.gen(Opcode::RASN, $1, src_var);
+                break;
+            }
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
         }
     };
 
@@ -182,26 +192,34 @@ while_stmt : WHILE LPAREN <Label>{
         driver.gen_label(driver.exit_breakable_scope());
     };
 
-switch_stmt : SWITCH LPAREN expression RPAREN LCURL <Variable>{
-        if ($3.type != Type::Int) {
-            throw syntax_error(lexer.loc, "cannot switch on an expression of non-integer type");
+switch_stmt : SWITCH LPAREN inplace_expression RPAREN LCURL <Variable>{
+        try {
+            if ($3.type != Type::Int) {
+                throw syntax_error_wrapper("cannot switch on an expression of non-integer type");
+            }
+            // Return the switching variable
+            $$ = $3.var;
+            driver.enter_breakable_scope(Label::make_temp());
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
         }
-        // Return the switching variable
-        $$ = $3.var;
-        driver.enter_breakable_scope(Label::make_temp());
     } caselist DEFAULT COLON stmtlist RCURL {
-        // End the switch scope and generate the end label
-        driver.gen_label(driver.exit_breakable_scope());
+            // End the switch scope and generate the end label
+            driver.gen_label(driver.exit_breakable_scope());
     };
-caselist : caselist CASE num COLON <Label>{
-        if ($3.type != Type::Int) {
-            throw syntax_error(lexer.loc, "cannot switch-case on an expression of non-integer type");
+caselist : caselist CASE inplace_num COLON <Label>{
+        try {
+            if ($3.type != Type::Int) {
+                throw syntax_error_wrapper("cannot switch-case on an expression of non-integer type");
+            }
+            // Create the next-case label
+            $$ = Label::make_temp();
+            auto cond = Variable::make_temp();
+            driver.gen(Opcode::IEQL, cond, $<Variable>0, $3.var);
+            driver.gen(Opcode::JMPZ, $$, cond);
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
         }
-        // Create the next-case label
-        $$ = Label::make_temp();
-        auto cond = Variable::make_temp();
-        driver.gen(Opcode::IEQL, cond, $<Variable>0, $3.var);
-        driver.gen(Opcode::JMPZ, $$, cond);
     } stmtlist {
         // Generate the next-case label
         driver.gen_label($5);
@@ -232,23 +250,33 @@ boolfactor : OP_NOT LPAREN boolexpr RPAREN { $$ = std::make_unique<BooleanNotNod
            | expression  OP_GEQ  expression { $$ = std::make_unique<BooleanLeafNode>(std::move($1), std::move($3), BooleanLeafNode::CompareOperation::GreaterEqual); }
 		   ;
 
-expression : expression OP_ADD term { $$ = gen_arithmetic_op_expr(driver, Opcode::IADD, Opcode::RADD, $1, $3); }
-		   | expression OP_SUB term { $$ = gen_arithmetic_op_expr(driver, Opcode::ISUB, Opcode::RSUB, $1, $3); }
-           | term { $$ = Expression($1); }
+inplace_expression : expression { $$ = $1->gen(driver); }
+
+expression : expression OP_ADD term { $$ = std::make_unique<ExpressionBinaryNode>(std::move($1), std::move($3), ExpressionBinaryNode::ArithmeticOperation::Add); }
+		   | expression OP_SUB term { $$ = std::make_unique<ExpressionBinaryNode>(std::move($1), std::move($3), ExpressionBinaryNode::ArithmeticOperation::Subtract); }
+           | term { $$ = std::move($1); }
 		   ;
 
-term : term OP_MUL factor { $$ = gen_arithmetic_op_expr(driver, Opcode::IMLT, Opcode::RMLT, $1, $3); }
-	 | term OP_DIV factor { $$ = gen_arithmetic_op_expr(driver, Opcode::IDIV, Opcode::RDIV, $1, $3); }
-     | factor { $$ = Expression($1); }
+term : term OP_MUL factor { $$ = std::make_unique<ExpressionBinaryNode>(std::move($1), std::move($3), ExpressionBinaryNode::ArithmeticOperation::Multiply); }
+	 | term OP_DIV factor { $$ = std::make_unique<ExpressionBinaryNode>(std::move($1), std::move($3), ExpressionBinaryNode::ArithmeticOperation::Divide); }
+     | factor { $$ = std::move($1); }
 	 ;
 
-factor : LPAREN expression RPAREN { $$ = Expression($2); }
-       | ID { $$ = Expression(get_var_type_or_error(driver, lexer, $1), $1); }
-       | num { $$ = Expression($1); }
+factor : LPAREN expression RPAREN { $$ = std::move($2); }
+       | ID { 
+        try {
+            $$ = std::make_unique<ExpressionIdNode>(get_var_type_or_error(driver, $1), $1);
+        } catch (const syntax_error_wrapper& e) {
+            throw syntax_error(lexer.loc, e.what());
+        }
+    }
+       | num { $$ = std::move($1); }
 	   ;
 
-num : NUM_FLOAT { $$ = Expression(Type::Float, Variable::make_temp()); driver.gen(Opcode::RASN, $$.var, $1); }
-    | NUM_INT { $$ = Expression(Type::Int, Variable::make_temp()); driver.gen(Opcode::IASN, $$.var, $1); }
+inplace_num : num { $$ = $1->gen(driver); }
+
+num : NUM_FLOAT { $$ = std::make_unique<ExpressionFloatImmediateNode>($1); }
+    | NUM_INT { $$ = std::make_unique<ExpressionFloatImmediateNode>($1); }
     ;
 
 %%

@@ -1,5 +1,7 @@
 #include "sdt_operations.h"
 
+#include "cpq.h"
+
 namespace cpq {
 static Type consolidate_types(Type a, Type b) {
     return a == b ? a : Type::Float;
@@ -70,10 +72,10 @@ void gen_boolean_op(Driver &driver, ControlFlow flow, Opcode intop,
     }
 }
 
-Type get_var_type_or_error(Driver &driver, Lexer &lexer, std::string var) {
+Type get_var_type_or_error(Driver &driver, std::string var) {
     auto type = driver.env().try_get(var);
     if (!type) {
-        throw cpq::Parser::syntax_error(lexer.loc, "unknown identifier " + var);
+        throw syntax_error_wrapper("unknown identifier " + var);
     }
     return type.value();
 }
