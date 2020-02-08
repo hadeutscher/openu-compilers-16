@@ -1,9 +1,0 @@
-RINP  a
-RINP  b
-RLSS  var_1 a b
-JMPZ  0007 var_1
-RPRT  a
-JUMP  0008
-RPRT  b
-HALT
-Created by Yuval Deutscher
