@@ -2,8 +2,8 @@ RINP  a
 RINP  b
 RLSS  var_1 a b
 JMPZ  0007 var_1
-IPRT  a
+RPRT  a
 JUMP  0008
-IPRT  b
+RPRT  b
 HALT
 Created by Yuval Deutscher

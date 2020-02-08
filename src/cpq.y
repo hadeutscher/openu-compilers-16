@@ -115,7 +115,7 @@ output_stmt : OUTPUT LPAREN expression RPAREN SEMICOLON
         driver.gen(Opcode::IPRT, $3.var);
         break;
     case Type::Float:
-        driver.gen(Opcode::IPRT, $3.var);
+        driver.gen(Opcode::RPRT, $3.var);
         break;
     }
 };

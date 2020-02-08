@@ -23,7 +23,7 @@ void Driver::gen_label(Label l) {
     // Convert the current instruction number to 4 character string to save as
     // the label name
     std::ostringstream ss;
-    ss << std::hex << std::setfill('0') << std::setw(4) << _curr_address;
+    ss << std::setfill('0') << std::setw(4) << _curr_address;
     auto str_label = ss.str();
     assert(str_label.length() == 4);
     _labels.insert({std::move(l), std::move(str_label)});
