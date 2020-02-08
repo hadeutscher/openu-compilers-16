@@ -17,7 +17,6 @@ struct Expression {
     // The default constructor only appears here to allow usage by Bison
     // we never actually use default-constructed expressions
     Expression() : type(Type::Int), var() {}
-    Expression(Type type) : type(type), var() {}
     Expression(Type type, Variable var) : type(type), var(var) {}
     virtual ~Expression() {}
 

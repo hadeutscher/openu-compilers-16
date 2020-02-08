@@ -24,7 +24,7 @@ Variable cast_if_needed(Driver &driver, Variable var, Type old_type,
 
 Expression gen_arithmetic_op_expr(Driver &driver, Opcode intop, Opcode realop,
                                   Expression exp_1, Expression exp_2) {
-    Expression result(consolidate_types(exp_1.type, exp_2.type));
+    Expression result(consolidate_types(exp_1.type, exp_2.type), Variable::make_temp());
     auto a = cast_if_needed(driver, exp_1.var, exp_1.type, result.type);
     auto b = cast_if_needed(driver, exp_2.var, exp_2.type, result.type);
     switch (result.type) {

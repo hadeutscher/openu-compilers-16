@@ -42,8 +42,10 @@ static auto parseArguments(cpq::Driver &driver, int argc, const char *argv[]) {
         printUsage();
         throw program_invocation_error("not enough args");
     }
+    driver.in.exceptions(std::ifstream::failbit);
     driver.in.open(in_file_name.value());
     std::string out_file_name(createOutputFilename(in_file_name.value()));
+    driver.out.exceptions(std::ofstream::failbit);
     driver.out.open(out_file_name);
     return std::make_tuple(debug, in_file_name.value(), out_file_name);
 }
@@ -74,5 +76,7 @@ int main(int argc, const char *argv[]) {
     if (!success) {
         remove(out_file_name.c_str());
         std::cerr << "Exited with no output due to error." << std::endl;
+        return -1;
     }
+    return 0;
 }

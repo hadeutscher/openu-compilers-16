@@ -1,0 +1,5 @@
+IADD  var_1 b c
+IMLT  var_2 var_1 d
+IDIV  var_3 e b
+IDIV  var_4 d e
+ISUB  var_5 var_3 var_4

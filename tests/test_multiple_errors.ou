@@ -1,0 +1,11 @@
+/* Multiple errors */
+
+lolz
+a: int;
+b: int;
+{
+  a = while;
+  b = 2;
+  if (b < 5)
+    output(b);
+}

@@ -56,9 +56,13 @@ declarations : declarations declaration
 declaration : idlist COLON type SEMICOLON
 {
     for (auto id : $1) {
-        driver.env().insert(id, $3);
+        if (!driver.env().insert(id, $3)) {
+            throw syntax_error(lexer.loc, "unable to create a variable with name " + id);
+        }
     }
-};
+}
+           | error SEMICOLON // Skip to semicolon on error
+           ;
 
 type : INT { $$ = Type::Int; }
      | FLOAT { $$ = Type::Float; }
@@ -77,7 +81,8 @@ stmt : assignment_stmt
       | switch_stmt
       | break_stmt
       | stmt_block
-	  ;
+	  | error SEMICOLON // Skip to semicolon on error
+      ;
 
 assignment_stmt : ID ASSIGN expression SEMICOLON 
 {
@@ -245,6 +250,7 @@ factor : LPAREN expression RPAREN { $$ = Expression($2); }
 num : NUM_FLOAT { $$ = Expression(Type::Float, Variable::make_temp()); driver.gen(Opcode::RASN, $$.var, $1); }
     | NUM_INT { $$ = Expression(Type::Int, Variable::make_temp()); driver.gen(Opcode::IASN, $$.var, $1); }
     ;
+
 %%
 void cpq::Parser::error (const location_type& l, const std::string& m)
 {

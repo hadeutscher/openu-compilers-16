@@ -1,13 +1,12 @@
 /* Finding minimum between two numbers */
-lolz
+lolz;
 a, b: float;
-
 {
     input(a);
     input(b);
 
     if (a < b)
-        output(a)
+        output(a);
     else
         output(b);
 }

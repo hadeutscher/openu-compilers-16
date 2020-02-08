@@ -1,0 +1,19 @@
+a,b,c,d,e: int;
+f,g,h,i,j: float;
+{
+  /* Note that use of unassigned variables is not prohibited in Quad,
+   * thus this code is still legit.
+   */
+
+  /* Testing complex expressions */
+  if (a < b || (b + c) * d >= (e / b) - (d / e) && !(c <= d))
+    output(1);
+  else
+    output(0);
+
+  /* Testing expressions with mixed ints and floats */
+  if (a < f || (a + i) < f)
+    output(1);
+  else
+    output(0);
+}
