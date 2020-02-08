@@ -21,8 +21,7 @@ void gen_boolean_op(Driver &driver, ControlFlow flow, Opcode intop,
 
 Type get_var_type_or_error(Driver &driver, std::string var);
 
-template <typename T>
-std::string immediate_to_string(T x) {
+template <typename T> std::string immediate_to_string(T x) {
     std::ostringstream ss;
     ss << x;
     return ss.str();

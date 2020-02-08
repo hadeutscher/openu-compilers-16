@@ -43,7 +43,7 @@ class BooleanNode {
 };
 
 class ExpressionNode {
-public:
+  public:
     virtual ~ExpressionNode() {}
     virtual Expression gen(Driver &driver) = 0;
 };
@@ -92,7 +92,8 @@ class BooleanLeafNode : public BooleanNode {
 
     // The default constructor only appears here to allow usage by Bison
     BooleanLeafNode() : BooleanNode(), a(), b(), op(CompareOperation::Equal) {}
-    BooleanLeafNode(std::unique_ptr<ExpressionNode> a, std::unique_ptr<ExpressionNode> b, CompareOperation op)
+    BooleanLeafNode(std::unique_ptr<ExpressionNode> a,
+                    std::unique_ptr<ExpressionNode> b, CompareOperation op)
         : BooleanNode(), a(std::move(a)), b(std::move(b)), op(op) {}
     virtual ~BooleanLeafNode() {}
 
@@ -104,7 +105,7 @@ class BooleanLeafNode : public BooleanNode {
 };
 
 class ExpressionBinaryNode : public ExpressionNode {
-public:
+  public:
     enum class ArithmeticOperation {
         Add,
         Subtract,
@@ -113,8 +114,11 @@ public:
     };
 
     // The default constructor only appears here to allow usage by Bison
-    ExpressionBinaryNode() : ExpressionNode(), a(), b(), op(ArithmeticOperation::Add) {}
-    ExpressionBinaryNode(std::unique_ptr<ExpressionNode> a, std::unique_ptr<ExpressionNode> b, ArithmeticOperation op)
+    ExpressionBinaryNode()
+        : ExpressionNode(), a(), b(), op(ArithmeticOperation::Add) {}
+    ExpressionBinaryNode(std::unique_ptr<ExpressionNode> a,
+                         std::unique_ptr<ExpressionNode> b,
+                         ArithmeticOperation op)
         : ExpressionNode(), a(std::move(a)), b(std::move(b)), op(op) {}
     virtual ~ExpressionBinaryNode() {}
 
@@ -126,7 +130,7 @@ public:
 };
 
 class ExpressionLeafNode : public ExpressionNode {
-public:
+  public:
     ExpressionLeafNode() : ExpressionNode(), e() {}
     ExpressionLeafNode(Expression e) : ExpressionNode(), e(std::move(e)) {}
     virtual ~ExpressionLeafNode() {}

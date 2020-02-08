@@ -43,28 +43,28 @@ void BooleanNotNode::gen(Driver &driver, ControlFlow flow) {
 void BooleanLeafNode::gen(Driver &driver, ControlFlow flow) {
     switch (op) {
     case CompareOperation::Equal:
-        gen_boolean_op(driver, std::move(flow), Opcode::IEQL, Opcode::REQL, a->gen(driver),
-                       b->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::IEQL, Opcode::REQL,
+                       a->gen(driver), b->gen(driver));
         return;
     case CompareOperation::NotEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::INQL, Opcode::RNQL, a->gen(driver),
-                       b->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::INQL, Opcode::RNQL,
+                       a->gen(driver), b->gen(driver));
         return;
     case CompareOperation::LessThan:
-        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, a->gen(driver),
-                       b->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS,
+                       a->gen(driver), b->gen(driver));
         return;
     case CompareOperation::GreaterThan:
-        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, a->gen(driver),
-                       b->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT,
+                       a->gen(driver), b->gen(driver));
         return;
     case CompareOperation::LessEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT, b->gen(driver),
-                       a->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::IGRT, Opcode::RGRT,
+                       b->gen(driver), a->gen(driver));
         return;
     case CompareOperation::GreaterEqual:
-        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS, b->gen(driver),
-                       a->gen(driver));
+        gen_boolean_op(driver, std::move(flow), Opcode::ILSS, Opcode::RLSS,
+                       b->gen(driver), a->gen(driver));
         return;
     }
     assert(false);
@@ -73,18 +73,20 @@ void BooleanLeafNode::gen(Driver &driver, ControlFlow flow) {
 Expression ExpressionBinaryNode::gen(Driver &driver) {
     switch (op) {
     case ArithmeticOperation::Add:
-        return gen_arithmetic_op_expr(driver, Opcode::IADD, Opcode::RADD, a->gen(driver), b->gen(driver));
+        return gen_arithmetic_op_expr(driver, Opcode::IADD, Opcode::RADD,
+                                      a->gen(driver), b->gen(driver));
     case ArithmeticOperation::Subtract:
-        return gen_arithmetic_op_expr(driver, Opcode::ISUB, Opcode::RSUB, a->gen(driver), b->gen(driver));
+        return gen_arithmetic_op_expr(driver, Opcode::ISUB, Opcode::RSUB,
+                                      a->gen(driver), b->gen(driver));
     case ArithmeticOperation::Multiply:
-        return gen_arithmetic_op_expr(driver, Opcode::IMLT, Opcode::RMLT, a->gen(driver), b->gen(driver));
+        return gen_arithmetic_op_expr(driver, Opcode::IMLT, Opcode::RMLT,
+                                      a->gen(driver), b->gen(driver));
     case ArithmeticOperation::Divide:
-        return gen_arithmetic_op_expr(driver, Opcode::IDIV, Opcode::RDIV, a->gen(driver), b->gen(driver));
+        return gen_arithmetic_op_expr(driver, Opcode::IDIV, Opcode::RDIV,
+                                      a->gen(driver), b->gen(driver));
     }
     assert(false);
 }
 
-Expression ExpressionLeafNode::gen(Driver &driver) {
-    return e;
-}
+Expression ExpressionLeafNode::gen(Driver &driver) { return e; }
 } // namespace cpq
