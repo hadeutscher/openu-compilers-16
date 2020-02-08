@@ -1,0 +1,14 @@
+IASN  a 1
+RASN  b 3.141
+ITOR  var_1 a
+RASN  b var_1
+RTOI  var_2 b
+IASN  a var_2
+RTOI  var_3 b
+ITOR  var_4 var_3
+RASN  b var_4
+ITOR  var_5 a
+RASN  b var_5
+RASN  c b
+HALT
+Created by Yuval Deutscher

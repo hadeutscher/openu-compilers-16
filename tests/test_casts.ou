@@ -1,0 +1,12 @@
+a: int;
+b: float;
+c: float;
+{
+  a = 1;
+  b = 3.141;
+  b = a; /* simple implicit cast */
+  a = static_cast(int)(b); /* simple explicit cast */
+  b = static_cast(int)(b); /* casting back and forth */
+  b = static_cast(int)(a); /* this should only generate the implicit int->float cast */
+  c = static_cast(float)(b); /* should not generate any casts */
+}

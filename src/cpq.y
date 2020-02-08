@@ -203,7 +203,11 @@ switch_stmt : SWITCH LPAREN inplace_expression RPAREN LCURL <Variable>{
         } catch (const syntax_error_wrapper& e) {
             throw syntax_error(lexer.loc, e.what());
         }
-    } caselist DEFAULT COLON stmtlist RCURL {
+    } caselist DEFAULT COLON {
+        // Generate two NOPs to account for the last case jumper code
+        driver.gen(Opcode::JUMP, RelativeLabel(1));
+        driver.gen(Opcode::JUMP, RelativeLabel(1));
+    } stmtlist RCURL {
             // End the switch scope and generate the end label
             driver.gen_label(driver.exit_breakable_scope());
     };
@@ -221,6 +225,14 @@ caselist : caselist CASE inplace_num COLON <Label>{
             throw syntax_error(lexer.loc, e.what());
         }
     } stmtlist {
+        // We generate a skip 2 instructions ahead here.
+        // This is a hack used to get fallthrough working with switch-case.
+        // Since we generate statements on the fly, and we don't have lookup table support in Quad,
+        // we have to generate the compare/if at the head of every case. Since we do not know if the
+        // case statements are going to break or not, we have to generate a jump at the end of the case
+        // to skip the condition check of the next case in case (hah) the current wants to fallthrough.
+        // This is also fine since all switch statements end with a default.
+        driver.gen(Opcode::JUMP, RelativeLabel(3));
         // Generate the next-case label
         driver.gen_label($5);
     }

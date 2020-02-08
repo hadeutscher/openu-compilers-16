@@ -56,6 +56,7 @@ class Driver {
     void write_arg(int arg) { out << arg; }
     void write_arg(float arg) { out << arg; }
     void write_arg(Label arg);
+    void write_arg(RelativeLabel arg);
     void write_arg(Variable arg);
 
     int _curr_address;

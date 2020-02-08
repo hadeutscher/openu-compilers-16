@@ -1,0 +1,24 @@
+a: int;
+{
+  input(a);
+  switch(a) {
+  case 1:
+    output(1);
+    break;
+  case 2:
+    output(2);
+    /* Fallthrough */
+  case 3:
+    output(3);
+    break;
+  case 4:
+    output(4);
+    break;
+    /* Unreachable code */
+    output(5);
+    break;
+  default:
+    output(1337);
+    break;
+  }
+}

@@ -5,12 +5,24 @@
 #include <sstream>
 
 namespace cpq {
+static std::string address_to_string(int address) {
+    std::ostringstream ss;
+    ss << std::setfill('0') << std::setw(4) << address;
+    auto str_label = ss.str();
+    assert(str_label.length() == 4);
+    return str_label;
+}
+
 void Driver::write_arg(Label arg) {
     assert(arg.value > 0);
 
     BackpatchHandle h = out.tellp();
     out << "XXXX"; // Backpatching with non-binary data is fun
     _backpatches.insert({std::move(arg), std::move(h)});
+}
+
+void Driver::write_arg(RelativeLabel arg) {
+    out << address_to_string(_curr_address + arg.rel);
 }
 
 void Driver::write_arg(Variable arg) {
@@ -22,11 +34,7 @@ void Driver::write_arg(Variable arg) {
 void Driver::gen_label(Label l) {
     // Convert the current instruction number to 4 character string to save as
     // the label name
-    std::ostringstream ss;
-    ss << std::setfill('0') << std::setw(4) << _curr_address;
-    auto str_label = ss.str();
-    assert(str_label.length() == 4);
-    _labels.insert({std::move(l), std::move(str_label)});
+    _labels.insert({std::move(l), std::move(address_to_string(_curr_address))});
 }
 
 void Driver::backpatch() {

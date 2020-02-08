@@ -31,4 +31,14 @@ template <> struct hash<cpq::Label> {
     }
 };
 } // namespace std
+
+namespace cpq {
+class RelativeLabel {
+  public:
+    RelativeLabel(int rel) : rel(rel) {}
+    virtual ~RelativeLabel() {}
+
+    int rel;
+};
+} // namespace cpq
 #endif // CPQ_LABEL_H
